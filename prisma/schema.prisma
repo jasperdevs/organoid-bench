@@ -1,0 +1,374 @@
+// OrganoidBench registry schema.
+// SQLite for local/dev; swap datasource to "postgresql" to move to Neon/Supabase.
+//
+// Status vocabularies (stored as strings; not enforced by SQLite):
+//   verification_status: draft | source_verified | data_ingested | unscored
+//                        | provisional | scored | curator_reviewed | published
+//                        | disputed | deprecated
+//   run_status:          draft | unscored | provisional | scored
+//                        | curator_reviewed | published | disputed | deprecated
+//   access_status:       open | restricted | request_required | embargoed | closed | unknown
+//   derivation_method:   computed | extracted_from_paper | submitted | curator_estimated
+//   source_kind:         paper | preprint | zenodo | figshare | dandi | github
+//                        | lab_submission | webpage | other
+//   review_status:       none | preprint | in_review | peer_reviewed | retracted
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Organization {
+  id              String   @id @default(cuid())
+  name            String   @unique
+  shortName       String?
+  institution     String?
+  country         String?
+  website         String?
+  pi              String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  sources         Source[]
+  datasets        Dataset[]
+  systems         System[]
+  submissions     Submission[]
+}
+
+model Source {
+  id                String   @id @default(cuid())
+  kind              String   // source_kind
+  title             String
+  url               String?
+  doi               String?  @unique
+  authors           String?  // JSON array
+  year              Int?
+  venue             String?
+  licenseName       String?
+  licenseUrl        String?
+  repositoryType    String?  // git | zenodo | figshare | dandi | other
+  abstractText      String?
+  reviewStatus      String?  @default("none")
+  lastCheckedAt     DateTime?
+  organizationId    String?
+  organization      Organization? @relation(fields: [organizationId], references: [id])
+  metadataJson      String?  // raw fetched metadata
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  datasets          Dataset[]
+  systems           System[]
+  metricValues      MetricValue[]
+  provenanceEvents  ProvenanceEvent[]
+}
+
+model Dataset {
+  id                       String   @id @default(cuid())
+  sourceId                 String?
+  source                   Source?  @relation(fields: [sourceId], references: [id])
+  organizationId           String?
+  organization             Organization? @relation(fields: [organizationId], references: [id])
+  name                     String
+  slug                     String   @unique
+  description              String?
+  modality                 String?  // MEA | calcium_imaging | patch_clamp | EEG | mixed | other
+  accessStatus             String   @default("unknown")
+  licenseName              String?
+  licenseUrl               String?
+  rawDataAvailable         Boolean  @default(false)
+  processedDataAvailable   Boolean  @default(false)
+  metadataAvailable        Boolean  @default(false)
+  codeAvailable            Boolean  @default(false)
+  dataUrl                  String?
+  externalId               String?  // DOI / DANDI ID / Zenodo record id
+  sizeBytes                BigInt?
+  nRecordings              Int?
+  lastCheckedAt            DateTime?
+  verificationStatus       String   @default("draft")
+  limitations              String?
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  files                    DatasetFile[]
+  systems                  System[]
+  provenanceEvents         ProvenanceEvent[]
+}
+
+model DatasetFile {
+  id           String   @id @default(cuid())
+  datasetId    String
+  dataset      Dataset  @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  path         String
+  format       String?  // nwb | h5 | mat | csv | parquet | zip | other
+  sizeBytes    BigInt?
+  checksumSha256 String?
+  url          String?
+  createdAt    DateTime @default(now())
+}
+
+model OrganoidPreparation {
+  id                String   @id @default(cuid())
+  name              String
+  slug              String   @unique
+  cellLine          String?   // e.g. iPSC, H9 ESC, primary
+  protocolReference String?
+  brainRegion       String?   // cortical | midbrain | cerebral | forebrain | other
+  divRange          String?   // e.g. "60-120"
+  mediaComposition  String?
+  notes             String?
+  sourceId          String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  systems           System[]
+}
+
+model RecordingSetup {
+  id                String   @id @default(cuid())
+  name              String
+  slug              String   @unique
+  platform          String?   // MaxOne | MEA2100 | CMOS-MEA | custom | other
+  channelCount      Int?
+  samplingRateHz    Int?
+  spikeSorter       String?   // Kilosort3 | MountainSort | custom
+  notes             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  systems           System[]
+}
+
+model StimulationProtocol {
+  id             String   @id @default(cuid())
+  name           String
+  slug           String   @unique
+  waveform       String?   // biphasic | monophasic | pattern
+  amplitudeUa    Float?
+  frequencyHz    Float?
+  pulseWidthUs   Float?
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  systems        System[]
+}
+
+model BenchmarkTrack {
+  id             String   @id @default(cuid())
+  slug           String   @unique
+  name           String
+  description    String?
+  rationale      String?
+  scoringFormula String?
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  metrics        Metric[]
+  tasks          Task[]
+  runs           BenchmarkRun[]
+}
+
+model Task {
+  id             String   @id @default(cuid())
+  slug           String   @unique
+  name           String
+  description    String?
+  trackId        String
+  track          BenchmarkTrack @relation(fields: [trackId], references: [id])
+  requiredInputs String?  // JSON array
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  systems        System[]
+  runs           BenchmarkRun[]
+}
+
+model Metric {
+  id             String   @id @default(cuid())
+  slug           String   @unique
+  name           String
+  description    String?
+  unit           String?
+  direction      String   @default("higher_better") // higher_better | lower_better
+  trackId        String?
+  track          BenchmarkTrack? @relation(fields: [trackId], references: [id])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  values         MetricValue[]
+}
+
+model MethodologyVersion {
+  id             String   @id @default(cuid())
+  version        String   @unique  // e.g. "1.0.0"
+  releasedAt     DateTime
+  summary        String?
+  changelog      String?
+  formulaJson    String?  // JSON for per-track weights and normalization
+  isCurrent      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  runs           BenchmarkRun[]
+  scoreCalculations ScoreCalculation[]
+}
+
+model System {
+  id                    String   @id @default(cuid())
+  slug                  String   @unique
+  name                  String
+  description           String?
+  sourceId              String?
+  source                Source?  @relation(fields: [sourceId], references: [id])
+  datasetId             String?
+  dataset               Dataset? @relation(fields: [datasetId], references: [id])
+  organizationId        String?
+  organization          Organization? @relation(fields: [organizationId], references: [id])
+  organoidPreparationId String?
+  organoidPreparation   OrganoidPreparation? @relation(fields: [organoidPreparationId], references: [id])
+  recordingSetupId      String?
+  recordingSetup        RecordingSetup? @relation(fields: [recordingSetupId], references: [id])
+  stimulationProtocolId String?
+  stimulationProtocol   StimulationProtocol? @relation(fields: [stimulationProtocolId], references: [id])
+  taskId                String?
+  task                  Task?    @relation(fields: [taskId], references: [id])
+  verificationStatus    String   @default("draft")
+  limitations           String?
+  submissionId          String?  @unique
+  submission            Submission? @relation(fields: [submissionId], references: [id])
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  runs                  BenchmarkRun[]
+  provenanceEvents      ProvenanceEvent[]
+}
+
+model BenchmarkRun {
+  id                     String   @id @default(cuid())
+  systemId               String
+  system                 System   @relation(fields: [systemId], references: [id], onDelete: Cascade)
+  trackId                String
+  track                  BenchmarkTrack @relation(fields: [trackId], references: [id])
+  taskId                 String?
+  task                   Task?    @relation(fields: [taskId], references: [id])
+  methodologyVersionId   String?
+  methodologyVersion     MethodologyVersion? @relation(fields: [methodologyVersionId], references: [id])
+  nOrganoids             Int?
+  nSessions              Int?
+  nBatches               Int?
+  nLabs                  Int?
+  runStatus              String   @default("draft")
+  dataCompletenessScore  Float?
+  notes                  String?
+  runDate                DateTime?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  metricValues           MetricValue[]
+  scoreCalculations      ScoreCalculation[]
+  runControls            RunControl[]
+  provenanceEvents       ProvenanceEvent[]
+}
+
+model MetricValue {
+  id                 String   @id @default(cuid())
+  benchmarkRunId     String
+  benchmarkRun       BenchmarkRun @relation(fields: [benchmarkRunId], references: [id], onDelete: Cascade)
+  metricId           String
+  metric             Metric   @relation(fields: [metricId], references: [id])
+  value              Float
+  normalizedValue    Float?
+  ciLow              Float?
+  ciHigh             Float?
+  ciMethod           String?   // bootstrap | parametric | reported
+  derivationMethod   String    // computed | extracted_from_paper | submitted | curator_estimated
+  derivationNotes    String?
+  sourceId           String?
+  source             Source?   @relation(fields: [sourceId], references: [id])
+  codeVersion        String?   // git sha / tag of computation code
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+}
+
+model Control {
+  id             String   @id @default(cuid())
+  slug           String   @unique
+  name           String
+  description    String?
+  category       String?   // stimulation | biological | analysis | statistical
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  runControls    RunControl[]
+}
+
+model RunControl {
+  id             String   @id @default(cuid())
+  benchmarkRunId String
+  benchmarkRun   BenchmarkRun @relation(fields: [benchmarkRunId], references: [id], onDelete: Cascade)
+  controlId      String
+  control        Control @relation(fields: [controlId], references: [id])
+  passed         Boolean?
+  notes          String?
+  createdAt      DateTime @default(now())
+
+  @@unique([benchmarkRunId, controlId])
+}
+
+model ScoreCalculation {
+  id                    String   @id @default(cuid())
+  benchmarkRunId        String
+  benchmarkRun          BenchmarkRun @relation(fields: [benchmarkRunId], references: [id], onDelete: Cascade)
+  methodologyVersionId  String
+  methodologyVersion    MethodologyVersion @relation(fields: [methodologyVersionId], references: [id])
+  scoreType             String   // signal | response | plasticity | learning | retention | repro | composite
+  score                 Float?
+  confidenceGrade       String?  // A | B | C | D | F | null
+  calculationJson       String?  // inputs used
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@unique([benchmarkRunId, methodologyVersionId, scoreType])
+}
+
+model ProvenanceEvent {
+  id             String   @id @default(cuid())
+  eventType      String   // imported | validated | scored | reviewed | corrected | deprecated
+  message        String?
+  actor          String?   // "system" | "curator:<name>" | "submitter:<email>"
+  sourceId       String?
+  source         Source?  @relation(fields: [sourceId], references: [id])
+  systemId       String?
+  system         System?  @relation(fields: [systemId], references: [id], onDelete: Cascade)
+  datasetId      String?
+  dataset        Dataset? @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  benchmarkRunId String?
+  benchmarkRun   BenchmarkRun? @relation(fields: [benchmarkRunId], references: [id], onDelete: Cascade)
+  payloadJson    String?
+  createdAt      DateTime @default(now())
+}
+
+model Submission {
+  id                String   @id @default(cuid())
+  submitterEmail    String
+  submitterName     String?
+  organizationId    String?
+  organization      Organization? @relation(fields: [organizationId], references: [id])
+  proposedSystemName String
+  proposedTrackSlug String?
+  proposedTaskSlug  String?
+  sourceUrl         String?
+  datasetUrl        String?
+  codeUrl           String?
+  payloadJson       String   // full submission blob
+  reviewStatus      String   @default("received") // received | triaged | accepted | rejected | needs_info
+  reviewerNotes     String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  system            System?
+}

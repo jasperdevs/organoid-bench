@@ -1,262 +1,297 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Container, PageHeader } from "@/components/ui/section";
-import { LineChart } from "@/components/line-chart";
-import { SYSTEMS, systemById, trackById, datasetById } from "@/lib/data";
+import { Container, PageHeader, Section } from "@/components/ui/section";
+import { StatusBadge } from "@/components/ui/empty-state";
+import { prisma } from "@/lib/db";
 
-export function generateStaticParams() {
-  return SYSTEMS.map((s) => ({ id: s.id }));
-}
+export const dynamic = "force-dynamic";
 
-const METRIC_LABELS: [keyof System["metrics"], string][] = [
-  ["signal", "Signal"],
-  ["response", "Response"],
-  ["plasticity", "Plasticity"],
-  ["learning", "Learning"],
-  ["retention", "Retention"],
-  ["repro", "Reproducibility"],
-];
-
-type System = NonNullable<ReturnType<typeof systemById>>;
-
-const CONTROL_LABELS: [keyof System["controls"], string][] = [
-  ["randomFeedback", "Random feedback"],
-  ["shamStim", "Sham stimulation"],
-  ["nullStim", "Null stimulation"],
-  ["frozenDecoder", "Frozen decoder"],
-  ["decoderOnly", "Decoder-only baseline"],
-  ["replication", "Independent replication"],
-];
-
-const CONTROL_COLOR: Record<string, string> = {
-  pass: "text-[color:var(--success)]",
-  partial: "text-[color:var(--warning)]",
-  missing: "text-[color:var(--foreground-muted)]",
-  fail: "text-[color:var(--destructive)]",
-  na: "text-[color:var(--foreground-muted)]",
-};
-
-export default async function SystemPage({
+export default async function SystemDetail({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const s = systemById(id);
-  if (!s) notFound();
-
-  const track = trackById(s.track);
-  const dataset = s.datasetId ? datasetById(s.datasetId) : undefined;
-
-  const rank =
-    [...SYSTEMS]
-      .filter((x) => x.track === s.track)
-      .sort((a, b) => b.metrics.composite - a.metrics.composite)
-      .findIndex((x) => x.id === s.id) + 1;
-
-  const curveSeries = [
-    {
-      id: "perf",
-      label: "Performance",
-      color: "#D97757",
-      points: s.learningCurve.map((p) => ({ x: p.x, y: p.y })),
+  const system = await prisma.system.findFirst({
+    where: { OR: [{ id }, { slug: id }] },
+    include: {
+      organization: true,
+      dataset: true,
+      source: true,
+      organoidPreparation: true,
+      recordingSetup: true,
+      stimulationProtocol: true,
+      task: { include: { track: true } },
+      runs: {
+        include: {
+          track: true,
+          task: true,
+          methodologyVersion: true,
+          scoreCalculations: true,
+          runControls: { include: { control: true } },
+          metricValues: { include: { metric: { include: { track: true } }, source: true } },
+        },
+        orderBy: { runDate: "desc" },
+      },
+      provenanceEvents: { orderBy: { createdAt: "desc" } },
     },
-    {
-      id: "base",
-      label: "Baseline",
-      color: "#9A9A9A",
-      points: s.learningCurve.map((p) => ({ x: p.x, y: p.baseline })),
-    },
-  ];
+  });
+  if (!system) notFound();
 
   return (
     <>
       <PageHeader
-        eyebrow={`System · ${s.id}`}
-        title={s.name}
-        description={`${s.source} · Rank #${rank} in ${track.name} · ${s.task}`}
-        right={
-          <div className="flex flex-col items-end gap-2">
-            <div className="inline-flex items-center gap-2 rounded-full border border-[color:var(--border-strong)] px-3 py-1 text-sm">
-              <span className="h-6 w-6 grid place-items-center rounded-full border border-[color:var(--border-strong)] font-mono text-xs">
-                {s.grade}
-              </span>
-              <span>Confidence</span>
-            </div>
-            <Link href="/about#confidence" className="text-sm text-[color:var(--foreground-muted)] underline underline-offset-4">
-              What do grades mean?
-            </Link>
-          </div>
-        }
+        eyebrow="System"
+        title={system.name}
+        description={system.description ?? undefined}
+        right={<StatusBadge status={system.verificationStatus} />}
       />
 
       <Container>
-        <div className="flex flex-col gap-10">
-          <section>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-px rounded-[12px] overflow-hidden border border-[color:var(--border)] bg-[color:var(--border)]">
-              {METRIC_LABELS.map(([k, label]) => (
-                <Stat key={k} label={label} value={fmt(s.metrics[k])} />
-              ))}
-              <Stat label="Composite" value={s.metrics.composite.toFixed(2)} highlight />
-            </div>
-          </section>
-
-          <section className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-            <Panel title="Organoid">
-              <KV k="Type" v={s.organoidType} />
-              <KV k="Species" v={s.species} />
-              <KV k="Cell line" v={s.cellLine} />
-              <KV k="Age" v={`${s.ageDays} days`} mono />
-              <KV k="Culture" v={s.culture} />
-            </Panel>
-            <Panel title="Recording & stimulation">
-              <KV k="Platform" v={s.platform} />
-              <KV k="Stimulation" v={s.stimMethod} />
-              <KV k="Decoder" v={s.decoder ?? "-"} />
-              <KV k="Preprocessing" v={s.preprocessing} />
-            </Panel>
-            <Panel title="Sample size">
-              <KV k="Organoids" v={s.nOrganoids} mono />
-              <KV k="Sessions" v={s.nSessions} mono />
-              <KV k="Batches" v={s.nBatches} mono />
-              <KV k="Labs" v={s.nLabs} mono />
-              <KV k="Last updated" v={s.lastUpdated} mono />
-            </Panel>
-          </section>
-
-          <section>
-            <h2 className="font-serif text-2xl mb-4">Learning curve</h2>
-            <div className="rounded-[12px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4">
-              <LineChart series={curveSeries} xLabels={s.learningCurve.map((_, i) => `S${i + 1}`)} yLabel="Performance (0–1)" height={260} />
-            </div>
-          </section>
-
-          <section className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-            <Panel title="Controls">
-              <ul className="flex flex-col divide-y divide-[color:var(--border)] -mt-2">
-                {CONTROL_LABELS.map(([k, label]) => {
-                  const v = s.controls[k];
-                  return (
-                    <li key={k} className="flex items-center justify-between py-2.5 text-sm">
-                      <span>{label}</span>
-                      <span className={`font-mono text-xs ${CONTROL_COLOR[v] ?? ""}`}>{v}</span>
-                    </li>
-                  );
-                })}
-              </ul>
-            </Panel>
-
-            <Panel title="Data availability">
-              <ul className="flex flex-col divide-y divide-[color:var(--border)] -mt-2">
-                {[
-                  ["Raw data", s.availability.raw],
-                  ["Processed data", s.availability.processed],
-                  ["Analysis code", s.availability.code],
-                  ["Peer reviewed", s.availability.peerReviewed],
-                  ["Open dataset", s.availability.openDataset],
-                ].map(([label, avail]) => (
-                  <li key={label as string} className="flex items-center justify-between py-2.5 text-sm">
-                    <span>{label}</span>
-                    <span className={`font-mono text-xs ${avail ? "text-[color:var(--success)]" : "text-[color:var(--foreground-muted)]"}`}>
-                      {avail ? "present" : "not available"}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </Panel>
-          </section>
-
-          <section>
-            <h2 className="font-serif text-2xl mb-4">Limitations</h2>
-            <div className="rounded-[12px] border border-[color:var(--border)] bg-[color:var(--surface-alt)] p-5">
-              <ul className="space-y-2 text-sm list-disc pl-5">
-                {s.limitations.map((l, i) => (
-                  <li key={i}>{l}</li>
-                ))}
-              </ul>
-              <p className="mt-4 text-xs text-[color:var(--foreground-muted)]">
-                This entry does not claim consciousness, sentience, or human-like intelligence. It claims measurable electrophysiological and adaptive behavior under the {s.task} task.
-              </p>
-            </div>
-          </section>
-
-          <section>
-            <h2 className="font-serif text-2xl mb-4">Source publication</h2>
-            <div className="rounded-[12px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5">
-              <div className="font-medium">{s.paper.title}</div>
-              <div className="text-sm text-[color:var(--foreground-muted)] mt-1">
-                {s.paper.authors.join(", ")} · {s.paper.venue} · {s.paper.year} · {s.paper.peerReviewed ? "Peer reviewed" : "Preprint"}
-              </div>
-              {s.paper.doi && (
-                <div className="text-xs font-mono text-[color:var(--foreground-muted)] mt-2">DOI: {s.paper.doi}</div>
-              )}
-              <div className="mt-4 flex gap-2 flex-wrap">
-                {dataset && (
-                  <Link
-                    href={`/datasets/${dataset.id}`}
-                    className="inline-flex items-center rounded-full border border-[color:var(--border-strong)] px-4 py-2 text-sm font-medium hover:bg-[color:var(--surface-alt)]"
-                  >
-                    View dataset
-                  </Link>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <Panel title="Organization">
+            {system.organization ? (
+              <Link href={`/organizations/${system.organization.id}`} className="font-medium hover:underline">
+                {system.organization.name}
+              </Link>
+            ) : (
+              <span className="text-[color:var(--foreground-muted)]">unspecified</span>
+            )}
+            {system.organization?.pi && (
+              <div className="text-sm text-[color:var(--foreground-muted)]">PI: {system.organization.pi}</div>
+            )}
+          </Panel>
+          <Panel title="Source">
+            {system.source ? (
+              <>
+                <div className="font-medium">{system.source.title}</div>
+                {system.source.doi && (
+                  <div className="text-xs font-mono text-[color:var(--foreground-muted)] mt-0.5">DOI {system.source.doi}</div>
                 )}
-                <Link
-                  href={`/benchmarks/${s.track}`}
-                  className="inline-flex items-center rounded-full border border-[color:var(--border-strong)] px-4 py-2 text-sm font-medium hover:bg-[color:var(--surface-alt)]"
-                >
-                  Open {track.name} track
+                {system.source.url && (
+                  <a className="text-sm hover:underline" href={system.source.url} target="_blank" rel="noopener noreferrer">
+                    Open source
+                  </a>
+                )}
+              </>
+            ) : (
+              <span className="text-[color:var(--foreground-muted)]">no source cited. This system cannot be ranked.</span>
+            )}
+          </Panel>
+          <Panel title="Dataset">
+            {system.dataset ? (
+              <>
+                <Link href={`/datasets/${system.dataset.slug}`} className="font-medium hover:underline">
+                  {system.dataset.name}
                 </Link>
-                <Link
-                  href="/submit"
-                  className="inline-flex items-center rounded-full border border-[color:var(--border-strong)] px-4 py-2 text-sm font-medium hover:bg-[color:var(--surface-alt)]"
-                >
-                  Submit correction
-                </Link>
-              </div>
-            </div>
-          </section>
-
-          <section>
-            <h2 className="font-serif text-2xl mb-4">Citation</h2>
-            <pre className="font-mono text-xs whitespace-pre bg-[color:var(--surface-alt)] rounded-[12px] p-4 border border-[color:var(--border)] overflow-x-auto">
-{`OrganoidBench entry ${s.id} (${s.lastUpdated}).
-"${s.name}". ${s.source}. Track: ${track.name}. Task: ${s.task}.
-Grade: ${s.grade}. https://organoidbench.org/systems/${s.id}`}
-            </pre>
-          </section>
+                <div className="text-xs font-mono text-[color:var(--foreground-muted)] mt-0.5">
+                  access: {system.dataset.accessStatus}
+                </div>
+              </>
+            ) : (
+              <span className="text-[color:var(--foreground-muted)]">no dataset linked</span>
+            )}
+          </Panel>
         </div>
       </Container>
+
+      <Section title="Experimental configuration">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <Panel title="Organoid preparation">
+            {system.organoidPreparation ? (
+              <div className="text-sm space-y-1">
+                <div>{system.organoidPreparation.name}</div>
+                {system.organoidPreparation.cellLine && (
+                  <div className="text-[color:var(--foreground-muted)]">cell line: {system.organoidPreparation.cellLine}</div>
+                )}
+                {system.organoidPreparation.brainRegion && (
+                  <div className="text-[color:var(--foreground-muted)]">region: {system.organoidPreparation.brainRegion}</div>
+                )}
+                {system.organoidPreparation.divRange && (
+                  <div className="text-[color:var(--foreground-muted)]">DIV: {system.organoidPreparation.divRange}</div>
+                )}
+              </div>
+            ) : <Missing />}
+          </Panel>
+          <Panel title="Recording setup">
+            {system.recordingSetup ? (
+              <div className="text-sm space-y-1">
+                <div>{system.recordingSetup.name}</div>
+                {system.recordingSetup.platform && (
+                  <div className="text-[color:var(--foreground-muted)]">platform: {system.recordingSetup.platform}</div>
+                )}
+                {system.recordingSetup.channelCount != null && (
+                  <div className="text-[color:var(--foreground-muted)]">channels: {system.recordingSetup.channelCount}</div>
+                )}
+                {system.recordingSetup.samplingRateHz != null && (
+                  <div className="text-[color:var(--foreground-muted)]">rate: {system.recordingSetup.samplingRateHz} Hz</div>
+                )}
+                {system.recordingSetup.spikeSorter && (
+                  <div className="text-[color:var(--foreground-muted)]">sorter: {system.recordingSetup.spikeSorter}</div>
+                )}
+              </div>
+            ) : <Missing />}
+          </Panel>
+          <Panel title="Stimulation protocol">
+            {system.stimulationProtocol ? (
+              <div className="text-sm space-y-1">
+                <div>{system.stimulationProtocol.name}</div>
+                {system.stimulationProtocol.waveform && (
+                  <div className="text-[color:var(--foreground-muted)]">waveform: {system.stimulationProtocol.waveform}</div>
+                )}
+                {system.stimulationProtocol.amplitudeUa != null && (
+                  <div className="text-[color:var(--foreground-muted)]">amplitude: {system.stimulationProtocol.amplitudeUa} uA</div>
+                )}
+                {system.stimulationProtocol.frequencyHz != null && (
+                  <div className="text-[color:var(--foreground-muted)]">freq: {system.stimulationProtocol.frequencyHz} Hz</div>
+                )}
+              </div>
+            ) : <Missing />}
+          </Panel>
+        </div>
+      </Section>
+
+      <Section title="Benchmark runs" description="One scored evaluation per row. Unscored rows show their status, not a fabricated score.">
+        {system.runs.length === 0 ? (
+          <div className="rounded-[12px] border border-dashed border-[color:var(--border-strong)] bg-[color:var(--surface)] p-6 text-sm text-[color:var(--foreground-muted)]">
+            No benchmark runs recorded for this system yet.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {system.runs.map((r) => {
+              const composite = r.scoreCalculations.find((sc) => sc.scoreType === "composite");
+              return (
+                <div key={r.id} className="rounded-[12px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4">
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <div>
+                      <div className="font-medium">
+                        <Link href={`/benchmarks/${r.track.slug}`} className="hover:underline">{r.track.name}</Link>
+                        {r.task && <span className="text-[color:var(--foreground-muted)]"> / {r.task.name}</span>}
+                      </div>
+                      <div className="text-xs font-mono text-[color:var(--foreground-muted)] mt-0.5">
+                        methodology {r.methodologyVersion?.version ?? "unassigned"}
+                        {r.runDate && ` · ${r.runDate.toISOString().slice(0, 10)}`}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <StatusBadge status={r.runStatus} />
+                      <div className="font-mono text-sm">
+                        {composite?.score != null ? composite.score.toFixed(2) : "unscored"}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs font-mono">
+                    <KV k="organoids" v={r.nOrganoids} />
+                    <KV k="sessions" v={r.nSessions} />
+                    <KV k="batches" v={r.nBatches} />
+                    <KV k="labs" v={r.nLabs} />
+                  </div>
+                  {r.metricValues.length > 0 && (
+                    <div className="mt-3 rounded-[8px] border border-[color:var(--border)] overflow-hidden">
+                      <table className="w-full text-xs">
+                        <thead className="bg-[color:var(--surface-alt)] text-left">
+                          <tr>
+                            <th className="px-3 py-2 font-medium">Metric</th>
+                            <th className="px-3 py-2 font-medium">Derivation</th>
+                            <th className="px-3 py-2 font-medium">Source</th>
+                            <th className="px-3 py-2 font-medium text-right">Value</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {r.metricValues.map((mv) => (
+                            <tr key={mv.id} className="border-t border-[color:var(--border)]">
+                              <td className="px-3 py-2">{mv.metric.name}</td>
+                              <td className="px-3 py-2 font-mono">{mv.derivationMethod}</td>
+                              <td className="px-3 py-2 truncate">{mv.source?.title ?? "-"}</td>
+                              <td className="px-3 py-2 font-mono text-right">
+                                {mv.value.toFixed(3)}
+                                {mv.metric.unit && <span className="text-[color:var(--foreground-muted)]"> {mv.metric.unit}</span>}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                  {r.runControls.length > 0 && (
+                    <div className="mt-3">
+                      <div className="text-xs font-mono text-[color:var(--foreground-muted)] mb-1">Controls</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {r.runControls.map((rc) => (
+                          <span
+                            key={rc.id}
+                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-mono border ${
+                              rc.passed === true
+                                ? "border-[color:var(--foreground)] text-[color:var(--foreground)]"
+                                : rc.passed === false
+                                  ? "border-[color:var(--border-strong)] text-[color:var(--foreground-muted)] line-through"
+                                  : "border-dashed border-[color:var(--border)] text-[color:var(--foreground-muted)]"
+                            }`}
+                          >
+                            {rc.control.name}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </Section>
+
+      {system.limitations && (
+        <Section title="Limitations">
+          <p className="text-sm text-[color:var(--foreground-muted)] max-w-3xl whitespace-pre-line">{system.limitations}</p>
+        </Section>
+      )}
+
+      <Section title="Provenance history">
+        {system.provenanceEvents.length === 0 ? (
+          <div className="rounded-[12px] border border-[color:var(--border)] bg-[color:var(--surface)] p-6 text-sm text-[color:var(--foreground-muted)]">
+            No provenance events.
+          </div>
+        ) : (
+          <ul className="rounded-[12px] border border-[color:var(--border)] bg-[color:var(--surface)] divide-y divide-[color:var(--border)]">
+            {system.provenanceEvents.map((ev) => (
+              <li key={ev.id} className="px-4 py-3 text-sm flex items-start justify-between gap-4">
+                <div>
+                  <div className="font-mono text-xs text-[color:var(--foreground-muted)]">{ev.eventType}</div>
+                  <div className="mt-0.5">{ev.message ?? "-"}</div>
+                  {ev.actor && <div className="text-xs text-[color:var(--foreground-muted)] mt-0.5">{ev.actor}</div>}
+                </div>
+                <div className="font-mono text-xs text-[color:var(--foreground-muted)] shrink-0">
+                  {ev.createdAt.toISOString().slice(0, 10)}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Section>
       <div className="h-16" />
     </>
-  );
-}
-
-function Stat({ label, value, highlight = false }: { label: string; value: string; highlight?: boolean }) {
-  return (
-    <div className={`p-4 ${highlight ? "bg-[color:var(--foreground)] text-[color:var(--background)]" : "bg-[color:var(--surface)]"}`}>
-      <div className={`text-xs ${highlight ? "opacity-75" : "text-[color:var(--foreground-muted)]"}`}>{label}</div>
-      <div className="mt-1 text-lg font-mono font-semibold">{value}</div>
-    </div>
   );
 }
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="rounded-[12px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5">
-      <div className="text-sm font-semibold mb-3">{title}</div>
+      <div className="text-sm font-semibold mb-2">{title}</div>
       {children}
     </div>
   );
 }
 
-function KV({ k, v, mono }: { k: string; v: React.ReactNode; mono?: boolean }) {
+function KV({ k, v }: { k: string; v: number | null }) {
   return (
-    <div className="flex items-start justify-between gap-4 py-2 border-b border-[color:var(--border)] last:border-0">
-      <div className="text-sm text-[color:var(--foreground-muted)]">{k}</div>
-      <div className={`text-sm text-right ${mono ? "font-mono text-xs" : ""}`}>{v}</div>
+    <div className="rounded-[8px] bg-[color:var(--surface-alt)] px-3 py-2">
+      <div className="text-[10px] uppercase tracking-wide text-[color:var(--foreground-muted)]">{k}</div>
+      <div className="mt-0.5">{v != null ? v : "-"}</div>
     </div>
   );
 }
 
-function fmt(v: number) {
-  return v === 0 ? "-" : v.toFixed(2);
+function Missing() {
+  return <span className="text-[color:var(--foreground-muted)] text-sm">not reported</span>;
 }

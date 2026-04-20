@@ -5,11 +5,14 @@ import { usePathname } from "next/navigation";
 import { Container } from "@/components/ui/section";
 
 const nav = [
-  { href: "/leaderboards", label: "Leaderboards" },
+  { href: "/leaderboards", label: "Leaderboard" },
+  { href: "/benchmarks", label: "Tracks" },
   { href: "/systems", label: "Systems" },
   { href: "/datasets", label: "Datasets" },
-  { href: "/benchmarks", label: "Benchmarks" },
-  { href: "/about", label: "About" },
+  { href: "/sources", label: "Sources" },
+  { href: "/organizations", label: "Labs" },
+  { href: "/methodology", label: "Methodology" },
+  { href: "/docs", label: "API" },
 ];
 
 function isActive(pathname: string, href: string) {
