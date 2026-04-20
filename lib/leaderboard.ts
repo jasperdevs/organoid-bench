@@ -17,6 +17,7 @@ import { PUBLIC_RUN_STATUSES } from "@/lib/status-guards";
 
 export type LeaderboardEntry = {
   systemId: string;
+  runId: string;
   systemSlug: string;
   systemName: string;
   organizationId: string | null;
@@ -126,6 +127,7 @@ export async function getLeaderboardEntries(
 
     return {
       systemId: r.system.id,
+      runId: r.id,
       systemSlug: r.system.slug,
       systemName: r.system.name,
       organizationId: r.system.organizationId,

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { BarChart, type Bar } from "@/components/bar-chart";
 
 type ScoreRow = {
+  runId: string;
   systemSlug: string;
   systemName: string;
   trackName: string;

@@ -9,7 +9,7 @@ if (target !== "local") {
 }
 
 const db = new Database("dev.db");
-const scores = db.prepare("SELECT id, benchmarkRunId, calculationJson FROM ScoreCalculation").all();
+const scores = db.prepare("SELECT id, benchmarkRunId, methodologyVersionId, status, calculationJson FROM ScoreCalculation").all();
 const results = [];
 
 for (const score of scores) {
@@ -22,15 +22,31 @@ for (const score of scores) {
       changed = true;
     }
   }
-  results.push({ scoreCalculationId: score.id, benchmarkRunId: score.benchmarkRunId, status: changed ? "needs_recompute" : "unchanged" });
+  const latestMethodology = db.prepare("SELECT id FROM MethodologyVersion WHERE version='0.1'").get();
+  const methodChanged = latestMethodology?.id !== score.methodologyVersionId;
+  const status = changed || methodChanged || score.status === "needs_recompute" ? "needs_recompute" : "current";
+  results.push({
+    scoreCalculationId: score.id,
+    benchmarkRunId: score.benchmarkRunId,
+    status,
+    inputChanged: changed,
+    methodologyChanged: methodChanged,
+  });
 }
 
 console.log(JSON.stringify({ dryRun, target, recompute, checked: results.length, results }, null, 2));
 
 if (!dryRun && results.some((result) => result.status === "needs_recompute")) {
   const now = new Date().toISOString();
+  const update = db.prepare("UPDATE ScoreCalculation SET status='needs_recompute' WHERE id=?");
   const insert = db.prepare(
     "INSERT INTO ProvenanceEvent (id,eventType,message,actor,payloadJson,createdAt) VALUES (?,?,?,?,?,?)",
   );
-  insert.run(`prov_scores_refresh_${Date.now()}`, "validated", "Score refresh detected changed inputs.", "system:scores-refresh", JSON.stringify({ results }), now);
+  const tx = db.transaction(() => {
+    for (const result of results.filter((item) => item.status === "needs_recompute")) {
+      update.run(result.scoreCalculationId);
+    }
+    insert.run(`prov_scores_refresh_${Date.now()}`, "validated", "Score refresh checked local score inputs.", "system:scores-refresh", JSON.stringify({ results, recompute }), now);
+  });
+  tx();
 }

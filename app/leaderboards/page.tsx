@@ -100,7 +100,7 @@ export default async function LeaderboardsPage(props: {
                   <tr key={e.systemId + e.trackSlug} className="border-t border-[color:var(--border)]">
                     <td className="px-4 py-3 font-mono text-xs">{i + 1}</td>
                     <td className="px-4 py-3">
-                      <Link href={`/systems/${e.systemSlug}`} className="font-medium hover:underline">
+                      <Link href={`/runs/${e.runId}`} className="font-medium hover:underline">
                         {e.systemName}
                       </Link>
                     </td>

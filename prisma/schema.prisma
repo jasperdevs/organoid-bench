@@ -331,6 +331,7 @@ model ScoreCalculation {
   scoreType             String   // signal | response | plasticity | learning | retention | repro | composite
   score                 Float?
   confidenceGrade       String?  // A | B | C | D | F | null
+  status                String   @default("current") // current | stale | needs_recompute | deprecated
   calculationJson       String?  // inputs used
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt

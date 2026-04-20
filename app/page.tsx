@@ -29,6 +29,7 @@ export default async function HomePage() {
   ]);
 
   const scoreRows = recentEntries.map((entry) => ({
+    runId: entry.runId,
     systemSlug: entry.systemSlug,
     systemName: entry.systemName,
     trackName: entry.trackName,
