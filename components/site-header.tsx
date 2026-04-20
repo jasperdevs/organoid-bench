@@ -31,7 +31,7 @@ export function SiteHeader() {
             className="shrink-0 inline-flex items-center gap-2 bg-[color:var(--foreground)] text-[color:var(--background)] rounded-full pl-2.5 pr-4 py-1.5"
           >
             <LogoMark />
-            <span className="text-sm font-semibold tracking-tight">
+            <span className="font-serif text-xl leading-none">
               OrganoidBench
             </span>
           </Link>

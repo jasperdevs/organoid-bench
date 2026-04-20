@@ -45,7 +45,7 @@ export function SiteFooter() {
                 <circle cx="11" cy="5" r="1.5" fill="currentColor" />
                 <circle cx="11" cy="11" r="1.5" fill="currentColor" />
               </svg>
-              <span className="font-serif text-4xl leading-none">Organoid<br />Bench</span>
+              <span className="font-serif text-4xl leading-none">OrganoidBench</span>
             </Link>
           </div>
 
