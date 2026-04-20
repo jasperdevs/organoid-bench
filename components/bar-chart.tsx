@@ -1,41 +1,48 @@
 "use client";
 
 import * as React from "react";
+import { useState } from "react";
 
 export type Bar = {
   label: string;
   value: number;
   color?: string;
-  iconLetter?: string;
+  source?: string;
+  sublabel?: string;
 };
 
 export function BarChart({
   bars,
   height = 280,
-  unit,
   maxOverride,
-  minLabelWidth = 60,
+  minLabelWidth = 68,
+  valueFormat,
 }: {
   bars: Bar[];
   height?: number;
-  unit?: string;
   maxOverride?: number;
   minLabelWidth?: number;
+  valueFormat?: (v: number) => string;
 }) {
-  const max = maxOverride ?? Math.max(...bars.map((b) => b.value));
+  const [hoverIdx, setHoverIdx] = useState<number | null>(null);
+  const max = maxOverride ?? Math.max(...bars.map((b) => b.value)) * 1.05;
   const n = bars.length;
-  const chartW = Math.max(n * minLabelWidth, 300);
-  const pad = { top: 20, right: 10, bottom: 70, left: 32 };
+  const chartW = Math.max(n * minLabelWidth, 320);
+  const pad = { top: 24, right: 12, bottom: 78, left: 24 };
   const plotH = height - pad.top - pad.bottom;
-  const barW = (chartW - pad.left - pad.right) / n;
+  const slot = (chartW - pad.left - pad.right) / n;
+  const barW = Math.min(40, slot * 0.62);
+
+  const fmt = valueFormat ?? ((v: number) => (v < 10 ? v.toFixed(2) : v.toFixed(0)));
 
   return (
-    <div className="w-full overflow-x-auto">
+    <div className="w-full overflow-x-auto relative">
       <svg
         width={chartW}
         height={height}
         viewBox={`0 0 ${chartW} ${height}`}
         className="block"
+        onMouseLeave={() => setHoverIdx(null)}
       >
         {[0, 0.25, 0.5, 0.75, 1].map((frac) => {
           const y = pad.top + plotH * (1 - frac);
@@ -53,54 +60,71 @@ export function BarChart({
         })}
         {bars.map((b, i) => {
           const h = (b.value / max) * plotH;
-          const x = pad.left + i * barW + barW * 0.15;
-          const w = barW * 0.7;
+          const slotX = pad.left + i * slot;
+          const x = slotX + (slot - barW) / 2;
           const y = pad.top + (plotH - h);
           const color = b.color ?? "var(--chart-3)";
+          const active = hoverIdx === i;
           return (
-            <g key={b.label}>
+            <g key={i} onMouseEnter={() => setHoverIdx(i)}>
+              <rect
+                x={slotX}
+                y={pad.top}
+                width={slot}
+                height={plotH}
+                fill="transparent"
+              />
               <rect
                 x={x}
                 y={y}
-                width={w}
+                width={barW}
                 height={h}
                 fill={color}
-                rx={2}
+                rx={3}
+                opacity={hoverIdx === null || active ? 1 : 0.45}
               />
               <text
-                x={x + w / 2}
+                x={x + barW / 2}
                 y={y - 6}
                 textAnchor="middle"
                 fontSize="11"
                 fill="var(--foreground)"
                 fontWeight={600}
               >
-                {b.value.toFixed(b.value < 10 ? 2 : 0)}
+                {fmt(b.value)}
               </text>
               <text
-                x={x + w / 2}
+                x={x + barW / 2}
                 y={height - pad.bottom + 14}
-                textAnchor="middle"
+                textAnchor="end"
                 fontSize="10"
                 fill="var(--foreground-muted)"
-                transform={`rotate(-35, ${x + w / 2}, ${height - pad.bottom + 14})`}
+                transform={`rotate(-35, ${x + barW / 2}, ${height - pad.bottom + 14})`}
               >
-                {b.label}
+                {b.label.length > 18 ? b.label.slice(0, 16) + "." : b.label}
               </text>
             </g>
           );
         })}
-        {unit && (
-          <text
-            x={pad.left}
-            y={pad.top - 6}
-            fontSize="10"
-            fill="var(--foreground-muted)"
-          >
-            {unit}
-          </text>
-        )}
       </svg>
+      {hoverIdx !== null && bars[hoverIdx] && (
+        <div
+          className="absolute pointer-events-none bg-[color:var(--foreground)] text-[color:var(--background)] rounded-[8px] px-3 py-2 text-xs shadow-sm"
+          style={{
+            left: Math.min(
+              pad.left + hoverIdx * slot + slot / 2 + 8,
+              chartW - 220,
+            ),
+            top: pad.top,
+          }}
+        >
+          <div className="font-medium">{bars[hoverIdx].label}</div>
+          {bars[hoverIdx].sublabel && (
+            <div className="opacity-70 mt-0.5">{bars[hoverIdx].sublabel}</div>
+          )}
+          <div className="font-mono mt-0.5">{fmt(bars[hoverIdx].value)}</div>
+        </div>
+      )}
     </div>
   );
 }

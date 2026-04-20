@@ -24,7 +24,7 @@ const serif = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
-  title: "OrganoidBench — independent analysis of brain organoid systems",
+  title: "OrganoidBench - independent analysis of brain organoid systems",
   description:
     "Benchmarks for brain organoid electrophysiology, plasticity, and closed-loop learning systems.",
 };

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Container, PageHeader } from "@/components/ui/section";
 import { BarChart } from "@/components/bar-chart";
-import { TRACKS, SYSTEMS } from "@/lib/data";
+import { TRACKS, SYSTEMS, labColor } from "@/lib/data";
 
 export function generateStaticParams() {
   return TRACKS.map((t) => ({ track: t.id }));
@@ -16,8 +16,6 @@ const METRIC_BY_TRACK: Record<string, keyof (typeof SYSTEMS)[number]["metrics"]>
   "retention": "retention",
   "reproducibility": "repro",
 };
-
-const CHART_PALETTE = ["#D97757", "#6FAE6F", "#1A1A1A", "#5B9BD5", "#B583D0", "#E5A84B", "#E06A6A", "#4E9AE0"];
 
 export default async function TrackPage({
   params,
@@ -37,10 +35,11 @@ export default async function TrackPage({
     .sort()
     .at(-1);
 
-  const chartData = ranked.slice(0, 12).map((s, i) => ({
-    label: s.name.length > 24 ? s.name.slice(0, 22) + "…" : s.name,
+  const chartData = ranked.slice(0, 12).map((s) => ({
+    label: s.name.length > 22 ? s.name.slice(0, 20) + "..." : s.name,
+    sublabel: s.source,
     value: s.metrics[metricKey],
-    color: CHART_PALETTE[i % CHART_PALETTE.length],
+    color: labColor(s.source),
   }));
 
   return (
@@ -50,20 +49,12 @@ export default async function TrackPage({
         title={track.name}
         description={track.description}
         right={
-          <div className="flex gap-2">
-            <Link
-              href="/submit"
-              className="inline-flex items-center rounded-full bg-[color:var(--foreground)] text-[color:var(--background)] px-4 py-2 text-sm font-medium hover:opacity-90"
-            >
-              Submit result
-            </Link>
-            <Link
-              href="/about#methodology"
-              className="inline-flex items-center rounded-full border border-[color:var(--border-strong)] px-4 py-2 text-sm font-medium hover:bg-[color:var(--surface-alt)]"
-            >
-              Methodology
-            </Link>
-          </div>
+          <Link
+            href="/about#methodology"
+            className="inline-flex items-center rounded-full border border-[color:var(--border-strong)] px-4 py-2 text-sm font-medium hover:bg-[color:var(--surface-alt)]"
+          >
+            Methodology
+          </Link>
         }
       />
 
@@ -72,16 +63,16 @@ export default async function TrackPage({
           <section>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-px rounded-[12px] overflow-hidden border border-[color:var(--border)] bg-[color:var(--border)]">
               <Stat label="Systems evaluated" value={String(systemsInTrack.length)} />
-              <Stat label="Top system" value={top ? top.name.slice(0, 22) : "—"} mono={false} />
-              <Stat label="Top score" value={top ? top.metrics[metricKey].toFixed(2) : "—"} />
-              <Stat label="Last updated" value={lastUpdated ?? "—"} mono />
+              <Stat label="Top system" value={top ? top.name.slice(0, 22) : "-"} mono={false} />
+              <Stat label="Top score" value={top ? top.metrics[metricKey].toFixed(2) : "-"} />
+              <Stat label="Last updated" value={lastUpdated ?? "-"} mono />
             </div>
           </section>
 
           <section>
             <h2 className="font-serif text-2xl mb-4">Leaderboard</h2>
             <div className="rounded-[12px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4">
-              <BarChart bars={chartData} maxOverride={1} height={360} unit="0–1" />
+              <BarChart bars={chartData} maxOverride={1} height={360} />
             </div>
           </section>
 
@@ -114,7 +105,7 @@ export default async function TrackPage({
                     <tr key={m.name} className="border-t border-[color:var(--border)]">
                       <td className="px-4 py-3 font-medium">{m.name}</td>
                       <td className="px-4 py-3 text-[color:var(--foreground-muted)]">{m.description}</td>
-                      <td className="px-4 py-3 font-mono text-xs text-right">{m.unit ?? "—"}</td>
+                      <td className="px-4 py-3 font-mono text-xs text-right">{m.unit ?? "-"}</td>
                     </tr>
                   ))}
                 </tbody>

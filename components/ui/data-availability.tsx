@@ -27,7 +27,7 @@ export function DataAvailabilityBadges({
     <div className="flex flex-wrap gap-1.5">
       {shown.map((i) => (
         <Badge key={i.key} tone={avail[i.key] ? "default" : "outline"}>
-          {avail[i.key] ? "✓ " : "— "}
+          {avail[i.key] ? "✓ " : "- "}
           {i.label}
         </Badge>
       ))}

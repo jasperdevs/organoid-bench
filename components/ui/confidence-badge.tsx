@@ -28,7 +28,7 @@ const map: Record<Grade, { label: string; sub: string; color: string }> = {
       "bg-[color:var(--surface-alt)] border-[color:var(--border)] text-[color:var(--foreground-muted)]",
   },
   Unscored: {
-    label: "—",
+    label: "-",
     sub: "unscored",
     color:
       "bg-[color:var(--surface-alt)] border-[color:var(--border)] text-[color:var(--foreground-muted)]",

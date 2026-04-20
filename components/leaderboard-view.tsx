@@ -5,12 +5,7 @@ import { useState, useMemo } from "react";
 import { BarChart } from "@/components/bar-chart";
 import { ScatterChart } from "@/components/scatter-chart";
 import { LineChart } from "@/components/line-chart";
-import { SYSTEMS, TRACKS, trackById, type Track } from "@/lib/data";
-
-const chartColors = [
-  "var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)",
-  "var(--chart-5)", "var(--chart-6)", "var(--chart-7)", "var(--chart-8)",
-];
+import { SYSTEMS, TRACKS, trackById, labColor, type Track } from "@/lib/data";
 
 const sections = [
   { id: "composite-index", label: "Composite Index" },
@@ -59,20 +54,22 @@ export function LeaderboardView() {
       .sort((a, b) => b.metrics[metric] - a.metrics[metric]);
   }, [filtered, metric]);
 
-  const topBars = sorted.slice(0, 25).map((s, i) => ({
-    label: s.name.split("—")[0].trim().slice(0, 22),
+  const topBars = sorted.slice(0, 25).map((s) => ({
+    label: s.name.split(":")[0].trim().slice(0, 22),
+    sublabel: s.source,
     value: Math.round(s.metrics[metric] * 100),
-    color: chartColors[i % 8],
+    color: labColor(s.source),
   }));
 
   const scatterPoints = SYSTEMS.filter(
     (s) => s.metrics[tradeoffX] > 0 && s.metrics[tradeoffY] > 0,
-  ).map((s, i) => ({
+  ).map((s) => ({
     id: s.id,
     x: s.metrics[tradeoffX] * 100,
     y: s.metrics[tradeoffY],
     label: s.name,
-    color: chartColors[i % 8],
+    color: labColor(s.source),
+    group: s.source,
   }));
 
   const allSources = Array.from(new Set(SYSTEMS.map((s) => s.source)));
@@ -85,16 +82,14 @@ export function LeaderboardView() {
     }
   }
   const years = Object.keys(byYear).map(Number).sort((a, b) => a - b);
-  const labColors: Record<string, string> = {};
-  allSources.forEach((l, i) => (labColors[l] = chartColors[i % 8]));
   const series = allSources.map((lab) => {
     const pts: { x: number; y: number }[] = [];
     let best = 0;
     years.forEach((y, i) => {
       if (byYear[y][lab] !== undefined) best = Math.max(best, byYear[y][lab]);
-      pts.push({ x: i, y: best });
+      if (best > 0) pts.push({ x: i, y: best });
     });
-    return { id: lab, label: lab, color: labColors[lab], points: pts.filter((p) => p.y > 0) };
+    return { id: lab, label: lab, color: labColor(lab), points: pts };
   }).filter((s) => s.points.length > 0);
 
   return (
@@ -117,7 +112,7 @@ export function LeaderboardView() {
         <section id="composite-index">
           <h2 className="font-serif text-3xl mb-2">{metricLabels[metric]}</h2>
           <p className="text-sm text-[color:var(--foreground-muted)] mb-5 max-w-xl">
-            Top organoid systems by selected metric. Scores are normalised 0–100.
+            Top organoid systems by selected metric. Scores are normalised 0 to 100.
           </p>
           <div className="flex items-center bg-[color:var(--surface-alt)] rounded-full p-1 gap-0.5 mb-4 overflow-x-auto">
             {metricTabs.map((t) => (
@@ -155,7 +150,7 @@ export function LeaderboardView() {
                 ))}
               </select>
             </div>
-            <BarChart bars={topBars} height={360} unit="score" />
+            <BarChart bars={topBars} height={360} />
           </div>
         </section>
 
@@ -320,13 +315,13 @@ export function LeaderboardView() {
                         <td className="px-4 py-3 text-[color:var(--foreground-muted)]">{trackById(s.track).name}</td>
                         <td className="px-4 py-3 font-mono text-right">{(s.metrics.composite * 100).toFixed(0)}</td>
                         <td className="px-4 py-3 font-mono text-right text-[color:var(--foreground-muted)]">
-                          {s.metrics.learning ? (s.metrics.learning * 100).toFixed(0) : "—"}
+                          {s.metrics.learning ? (s.metrics.learning * 100).toFixed(0) : "-"}
                         </td>
                         <td className="px-4 py-3 font-mono text-right text-[color:var(--foreground-muted)]">
                           {(s.metrics.signal * 100).toFixed(0)}
                         </td>
                         <td className="px-4 py-3 font-mono text-right text-[color:var(--foreground-muted)]">
-                          {s.metrics.plasticity ? (s.metrics.plasticity * 100).toFixed(0) : "—"}
+                          {s.metrics.plasticity ? (s.metrics.plasticity * 100).toFixed(0) : "-"}
                         </td>
                         <td className="px-4 py-3 font-mono text-right text-[color:var(--foreground-muted)]">
                           {(s.metrics.repro * 100).toFixed(0)}

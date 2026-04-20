@@ -59,7 +59,7 @@ export default async function DatasetPage({
                       : "border border-[color:var(--border)] text-[color:var(--foreground-muted)]"
                   }`}
                 >
-                  {present ? "✓" : "—"} {label}
+                  {present ? "✓" : "-"} {label}
                 </span>
               ))}
               <span className="inline-flex items-center rounded-full border border-[color:var(--border)] px-3 py-1 text-xs">

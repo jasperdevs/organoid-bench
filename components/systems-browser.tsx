@@ -173,7 +173,7 @@ function Metric({ label, v }: { label: string; v: number }) {
   return (
     <div>
       <div className="text-[10px] text-[color:var(--foreground-muted)]">{label}</div>
-      <div className="font-mono">{v ? v.toFixed(2) : "—"}</div>
+      <div className="font-mono">{v ? v.toFixed(2) : "-"}</div>
     </div>
   );
 }

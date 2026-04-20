@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Container } from "@/components/ui/section";
 
 const nav = [
@@ -9,14 +12,20 @@ const nav = [
   { href: "/about", label: "About" },
 ];
 
+function isActive(pathname: string, href: string) {
+  if (href === "/") return pathname === "/";
+  return pathname === href || pathname.startsWith(href + "/");
+}
+
 export function SiteHeader() {
+  const pathname = usePathname() ?? "/";
   return (
     <header className="sticky top-0 z-40 bg-[color:var(--background)] border-b border-[color:var(--border)]">
       <Container>
         <div className="h-16 flex items-center gap-4">
           <Link
             href="/"
-            className="shrink-0 inline-flex items-center gap-2 bg-[color:var(--foreground)] text-[color:var(--background)] rounded-full pl-3 pr-4 py-1.5"
+            className="shrink-0 inline-flex items-center gap-2 bg-[color:var(--foreground)] text-[color:var(--background)] rounded-full pl-2.5 pr-4 py-1.5"
           >
             <LogoMark />
             <span className="text-sm font-semibold tracking-tight">
@@ -25,38 +34,54 @@ export function SiteHeader() {
           </Link>
 
           <nav className="hidden lg:flex items-center bg-[color:var(--surface-alt)] rounded-full p-1 gap-0.5">
-            {nav.map((n) => (
-              <Link
-                key={n.href}
-                href={n.href}
-                className="px-3.5 py-1.5 rounded-full text-sm text-[color:var(--foreground)] hover:bg-[color:var(--surface)] font-medium"
-              >
-                {n.label}
-              </Link>
-            ))}
+            {nav.map((n) => {
+              const active = isActive(pathname, n.href);
+              return (
+                <Link
+                  key={n.href}
+                  href={n.href}
+                  className={`px-3.5 py-1.5 rounded-full text-sm font-medium ${
+                    active
+                      ? "bg-[color:var(--foreground)] text-[color:var(--background)]"
+                      : "text-[color:var(--foreground)] hover:bg-[color:var(--surface)]"
+                  }`}
+                  aria-current={active ? "page" : undefined}
+                >
+                  {n.label}
+                </Link>
+              );
+            })}
           </nav>
 
           <div className="ml-auto flex items-center gap-2">
-            <Link
-              href="/submit"
+            <a
+              href="mailto:jasper.mceligott@gmail.com?subject=OrganoidBench%20submission"
               className="hidden sm:inline-flex items-center rounded-full bg-[color:var(--foreground)] text-[color:var(--background)] px-4 py-2 text-sm font-medium hover:opacity-90"
             >
               Submit entry
-            </Link>
+            </a>
           </div>
         </div>
 
         <div className="lg:hidden pb-3 -mt-1 overflow-x-auto">
           <nav className="inline-flex items-center bg-[color:var(--surface-alt)] rounded-full p-1 gap-0.5">
-            {nav.map((n) => (
-              <Link
-                key={n.href}
-                href={n.href}
-                className="px-3.5 py-1.5 rounded-full text-sm text-[color:var(--foreground)] hover:bg-[color:var(--surface)] font-medium whitespace-nowrap"
-              >
-                {n.label}
-              </Link>
-            ))}
+            {nav.map((n) => {
+              const active = isActive(pathname, n.href);
+              return (
+                <Link
+                  key={n.href}
+                  href={n.href}
+                  className={`px-3.5 py-1.5 rounded-full text-sm font-medium whitespace-nowrap ${
+                    active
+                      ? "bg-[color:var(--foreground)] text-[color:var(--background)]"
+                      : "text-[color:var(--foreground)] hover:bg-[color:var(--surface)]"
+                  }`}
+                  aria-current={active ? "page" : undefined}
+                >
+                  {n.label}
+                </Link>
+              );
+            })}
           </nav>
         </div>
       </Container>
@@ -67,21 +92,19 @@ export function SiteHeader() {
 function LogoMark() {
   return (
     <svg
-      width="16"
-      height="16"
-      viewBox="0 0 16 16"
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
       fill="none"
       aria-hidden="true"
       className="shrink-0"
     >
-      <circle cx="5" cy="8" r="2.5" fill="currentColor" />
-      <circle cx="11" cy="5" r="1.5" fill="currentColor" />
-      <circle cx="11" cy="11" r="1.5" fill="currentColor" />
-      <path
-        d="M7 8h2.5M9.5 6.5l1.5-1M9.5 9.5l1.5 1"
-        stroke="currentColor"
-        strokeWidth="1"
-      />
+      <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="1.5" fill="none" />
+      <circle cx="9" cy="10" r="1.6" fill="currentColor" />
+      <circle cx="15" cy="10" r="1.2" fill="currentColor" />
+      <circle cx="10.5" cy="14.5" r="1.2" fill="currentColor" />
+      <circle cx="14.5" cy="14.5" r="1.4" fill="currentColor" />
+      <path d="M9 10 L15 10 M10.5 14.5 L14.5 14.5 M9 10 L10.5 14.5 M15 10 L14.5 14.5" stroke="currentColor" strokeWidth="0.8" opacity="0.5" />
     </svg>
   );
 }

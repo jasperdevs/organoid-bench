@@ -28,7 +28,7 @@ const glyph: Record<NonNullable<Controls[keyof Controls]>, string> = {
   pass: "✓",
   fail: "✗",
   partial: "≈",
-  missing: "—",
+  missing: "-",
 };
 
 const color: Record<NonNullable<Controls[keyof Controls]>, string> = {

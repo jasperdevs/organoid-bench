@@ -320,7 +320,7 @@ function mkCurve(start: number, end: number, noise = 0.02, baseline = 0.2) {
 export const SYSTEMS: System[] = [
   {
     id: "ob-sys-0001",
-    name: "DishBrain v2.1 — Pong",
+    name: "DishBrain v2.1: Pong",
     source: "Kagan Lab",
     track: "closed-loop-learning",
     task: "Pong-style goal reaching",
@@ -350,7 +350,7 @@ export const SYSTEMS: System[] = [
   },
   {
     id: "ob-sys-0002",
-    name: "Cortical organoid — stim-response map",
+    name: "Cortical organoid: stim-response map",
     source: "Muotri Lab",
     track: "responsiveness",
     task: "Stimulus-response tuning",
@@ -375,7 +375,7 @@ export const SYSTEMS: System[] = [
   },
   {
     id: "ob-sys-0003",
-    name: "FinalSpark CL-01 — target state",
+    name: "FinalSpark CL-01: target state",
     source: "FinalSpark",
     track: "closed-loop-learning",
     task: "Target-state maintenance",
@@ -401,7 +401,7 @@ export const SYSTEMS: System[] = [
   },
   {
     id: "ob-sys-0004",
-    name: "Cerebral organoid — plasticity induction",
+    name: "Cerebral organoid: plasticity induction",
     source: "Lancaster Lab",
     track: "plasticity",
     task: "Paired-pathway induction",
@@ -426,7 +426,7 @@ export const SYSTEMS: System[] = [
   },
   {
     id: "ob-sys-0005",
-    name: "BrainXell assembloid — retention",
+    name: "BrainXell assembloid: retention",
     source: "BrainXell",
     track: "retention",
     task: "Matched re-exposure",
@@ -452,7 +452,7 @@ export const SYSTEMS: System[] = [
   },
   {
     id: "ob-sys-0006",
-    name: "Knoblich lab — spontaneous activity panel",
+    name: "Knoblich lab: spontaneous activity panel",
     source: "Knoblich Lab",
     track: "signal-quality",
     task: "Spontaneous activity",
@@ -477,7 +477,7 @@ export const SYSTEMS: System[] = [
   },
   {
     id: "ob-sys-0007",
-    name: "Finkbeiner — closed-loop cart-pole",
+    name: "Finkbeiner: closed-loop cart-pole",
     source: "Finkbeiner Lab",
     track: "closed-loop-learning",
     task: "Cart-pole balance",
@@ -523,13 +523,13 @@ export const SYSTEMS: System[] = [
     learningCurve: mkCurve(0.23, 0.68, 0.03, 0.25),
     datasetId: "ob-ds-0008",
     limitations: ["Independent replication; effect sizes slightly reduced vs original"],
-    paper: { title: "Multi-lab replication of DishBrain v2.1 — Pong", authors: ["Independent Consortium"], year: 2026, venue: "Preprint (OSF)", peerReviewed: false },
+    paper: { title: "Multi-lab replication of DishBrain v2.1: Pong", authors: ["Independent Consortium"], year: 2026, venue: "Preprint (OSF)", peerReviewed: false },
     culture: "Matched to original",
     preprocessing: "Matched to original",
   },
   {
     id: "ob-sys-0009",
-    name: "Muotri — oscillatory dev panel",
+    name: "Muotri: oscillatory dev panel",
     source: "Muotri Lab",
     track: "signal-quality",
     task: "Long-term monitoring",
@@ -574,13 +574,13 @@ export const SYSTEMS: System[] = [
     learningCurve: mkCurve(0.26, 0.55, 0.025, 0.27),
     datasetId: "ob-ds-0010",
     limitations: ["Pooled across labs; variance is wide", "No cross-task generalization claim"],
-    paper: { title: "Organoid intelligence consortium — task suite", authors: ["Smirnova, L. et al."], year: 2025, venue: "Frontiers in Science", peerReviewed: true },
+    paper: { title: "Organoid intelligence consortium: task suite", authors: ["Smirnova, L. et al."], year: 2025, venue: "Frontiers in Science", peerReviewed: true },
     culture: "Pooled protocols",
     preprocessing: "Unified pipeline, open source",
   },
   {
     id: "ob-sys-0011",
-    name: "Brainoware — reservoir speech",
+    name: "Brainoware: reservoir speech",
     source: "Indiana Bloomington",
     track: "closed-loop-learning",
     task: "Speech reservoir readout",
@@ -606,7 +606,7 @@ export const SYSTEMS: System[] = [
   },
   {
     id: "ob-sys-0012",
-    name: "Cortical organoid — dopaminergic learning",
+    name: "Cortical organoid: dopaminergic learning",
     source: "FinalSpark",
     track: "plasticity",
     task: "Reward-conditioned induction",
@@ -631,7 +631,7 @@ export const SYSTEMS: System[] = [
   },
   {
     id: "ob-sys-0013",
-    name: "Pasca midbrain — responsiveness",
+    name: "Pasca midbrain: responsiveness",
     source: "Pasca Lab",
     track: "responsiveness",
     task: "Dopaminergic stimulus response",
@@ -656,7 +656,7 @@ export const SYSTEMS: System[] = [
   },
   {
     id: "ob-sys-0014",
-    name: "Quadros — retinal organoid responsiveness",
+    name: "Quadros: retinal organoid responsiveness",
     source: "Quadros Lab",
     track: "responsiveness",
     task: "Light-stimulus response",
@@ -681,7 +681,7 @@ export const SYSTEMS: System[] = [
   },
   {
     id: "ob-sys-0015",
-    name: "Muotri — Rett syndrome signal",
+    name: "Muotri: Rett syndrome signal",
     source: "Muotri Lab",
     track: "signal-quality",
     task: "Disease-model spontaneous activity",
@@ -706,7 +706,7 @@ export const SYSTEMS: System[] = [
   },
   {
     id: "ob-sys-0016",
-    name: "Koch — assembloid closed-loop",
+    name: "Koch: assembloid closed-loop",
     source: "Koch Lab",
     track: "closed-loop-learning",
     task: "Reach-to-target (virtual)",
@@ -732,7 +732,7 @@ export const SYSTEMS: System[] = [
   },
   {
     id: "ob-sys-0017",
-    name: "Hartung — retention panel",
+    name: "Hartung: retention panel",
     source: "Hartung Lab",
     track: "retention",
     task: "Re-exposure at 24h, 7d",
@@ -758,7 +758,7 @@ export const SYSTEMS: System[] = [
   },
   {
     id: "ob-sys-0018",
-    name: "Cortical organoid — cross-lab plasticity",
+    name: "Cortical organoid: cross-lab plasticity",
     source: "Multi-site",
     track: "plasticity",
     task: "Paired-pathway induction",
@@ -783,7 +783,7 @@ export const SYSTEMS: System[] = [
   },
   {
     id: "ob-sys-0019",
-    name: "Chen — Pong replication",
+    name: "Chen: Pong replication",
     source: "Chen Lab (Indiana)",
     track: "closed-loop-learning",
     task: "Pong-style goal reaching",
@@ -809,7 +809,7 @@ export const SYSTEMS: System[] = [
   },
   {
     id: "ob-sys-0020",
-    name: "Cortical organoid — long retention",
+    name: "Cortical organoid: long retention",
     source: "Hartung Lab",
     track: "retention",
     task: "30-day retention",
@@ -835,7 +835,7 @@ export const SYSTEMS: System[] = [
   },
   {
     id: "ob-sys-0021",
-    name: "Muotri — signal reference panel v2",
+    name: "Muotri: signal reference panel v2",
     source: "Muotri Lab",
     track: "reproducibility",
     task: "Reference panel (signal)",
@@ -910,7 +910,7 @@ export const SYSTEMS: System[] = [
   },
   {
     id: "ob-sys-0024",
-    name: "Lancaster — ion-channel perturbation",
+    name: "Lancaster: ion-channel perturbation",
     source: "Lancaster Lab",
     track: "responsiveness",
     task: "TTX / GBZ perturbation",
@@ -935,7 +935,7 @@ export const SYSTEMS: System[] = [
   },
   {
     id: "ob-sys-0025",
-    name: "Kagan — extended retention (24h)",
+    name: "Kagan: extended retention (24h)",
     source: "Kagan Lab",
     track: "retention",
     task: "Pong re-exposure 24h",
@@ -961,7 +961,7 @@ export const SYSTEMS: System[] = [
   },
   {
     id: "ob-sys-0026",
-    name: "Assembloid reservoir — MNIST",
+    name: "Assembloid reservoir: MNIST",
     source: "Koch Lab",
     track: "closed-loop-learning",
     task: "MNIST reservoir classification",
@@ -1031,13 +1031,13 @@ export const SYSTEMS: System[] = [
     learningCurve: mkCurve(0.3, 0.8, 0.02, 0.3),
     datasetId: "ob-ds-0009",
     limitations: ["Comparison depends on matched electrode layout assumptions"],
-    paper: { title: "Organoid vs in vivo electrophysiology — a cross-system study", authors: ["Consortium"], year: 2026, venue: "Neuron", peerReviewed: true },
+    paper: { title: "Organoid vs in vivo electrophysiology: a cross-system study", authors: ["Consortium"], year: 2026, venue: "Neuron", peerReviewed: true },
     culture: "Various",
     preprocessing: "Unified",
   },
   {
     id: "ob-sys-0029",
-    name: "Knoblich — oscillatory plasticity",
+    name: "Knoblich: oscillatory plasticity",
     source: "Knoblich Lab",
     track: "plasticity",
     task: "Theta-induction plasticity",
@@ -1062,7 +1062,7 @@ export const SYSTEMS: System[] = [
   },
   {
     id: "ob-sys-0030",
-    name: "Finkbeiner — extended closed-loop",
+    name: "Finkbeiner: extended closed-loop",
     source: "Finkbeiner Lab",
     track: "closed-loop-learning",
     task: "Multi-session cart-pole",
@@ -1115,7 +1115,7 @@ export type Dataset = {
 
 export const DATASETS: Dataset[] = [
   {
-    id: "ob-ds-0001", name: "DishBrain v2.1 — Pong sessions",
+    id: "ob-ds-0001", name: "DishBrain v2.1: Pong sessions",
     source: "Kagan Lab", modality: "HD-MEA + task logs", platform: "MaxOne", species: "Human iPSC + mouse",
     organoidType: "Cortical cell culture",
     nOrganoids: 38, nSessions: 176, duration: "264 h", size: "2.1 TB raw", license: "CC-BY-4.0", access: "Open",
@@ -1205,7 +1205,7 @@ export const DATASETS: Dataset[] = [
     organoidType: "Cortical cell culture",
     nOrganoids: 38, nSessions: 160, duration: "240 h", size: "1.8 TB", license: "CC-BY-4.0", access: "Open",
     raw: true, processed: true, code: true,
-    description: "Cross-lab replication of DishBrain v2.1 — Pong sessions.",
+    description: "Cross-lab replication of DishBrain v2.1: Pong sessions.",
     tracks: ["reproducibility", "closed-loop-learning"],
     lastUpdated: "2026-04-05",
   },
@@ -1324,16 +1324,99 @@ export const STATUS_COUNTS = {
 
 export const RECENT_UPDATES: { date: string; type: string; text: string; href?: string }[] = [
   { date: "2026-04-18", type: "System", text: "ob-sys-0001 retention sub-score updated after consortium re-analysis", href: "/systems/ob-sys-0001" },
-  { date: "2026-04-15", type: "System", text: "ob-sys-0028 added — organoid vs in vivo cross-system comparison", href: "/systems/ob-sys-0028" },
+  { date: "2026-04-15", type: "System", text: "ob-sys-0028 added: organoid vs in vivo cross-system comparison", href: "/systems/ob-sys-0028" },
   { date: "2026-04-12", type: "Dataset", text: "ob-ds-0009 cross-lab reference panel v2 released", href: "/datasets/ob-ds-0009" },
-  { date: "2026-04-10", type: "System", text: "ob-sys-0018 added — cross-lab plasticity meta-analysis", href: "/systems/ob-sys-0018" },
-  { date: "2026-04-08", type: "System", text: "ob-sys-0030 added — Finkbeiner extended closed-loop", href: "/systems/ob-sys-0030" },
+  { date: "2026-04-10", type: "System", text: "ob-sys-0018 added: cross-lab plasticity meta-analysis", href: "/systems/ob-sys-0018" },
+  { date: "2026-04-08", type: "System", text: "ob-sys-0030 added: Finkbeiner extended closed-loop", href: "/systems/ob-sys-0030" },
   { date: "2026-04-05", type: "System", text: "ob-sys-0008 independent replication moved to grade A", href: "/systems/ob-sys-0008" },
-  { date: "2026-04-02", type: "Methodology", text: "v1.3.0 — decoder-only control required for closed-loop track", href: "/about#methodology" },
+  { date: "2026-04-02", type: "Methodology", text: "v1.3.0: decoder-only control required for closed-loop track", href: "/about#methodology" },
   { date: "2026-03-30", type: "System", text: "ob-sys-0003 FinalSpark CL-01 scoring updated", href: "/systems/ob-sys-0003" },
 ];
 
 export const systemsForTrack = (t: Track) => SYSTEMS.filter((s) => s.track === t);
+
+const LAB_PALETTE = [
+  "#D97757",
+  "#5F9E5F",
+  "#1A1A1A",
+  "#4E86C6",
+  "#BD844D",
+  "#D99838",
+  "#C75454",
+  "#6A6A6A",
+];
+
+const _sources = Array.from(new Set(SYSTEMS.map((s) => s.source))).sort();
+export const LAB_COLORS: Record<string, string> = Object.fromEntries(
+  _sources.map((s, i) => [s, LAB_PALETTE[i % LAB_PALETTE.length]]),
+);
+export const labColor = (source: string) => LAB_COLORS[source] ?? "#1A1A1A";
+
+export type LabSource = {
+  id: string;
+  name: string;
+  shortName: string;
+  institution: string;
+  pi: string;
+  website?: string;
+};
+
+export const LAB_SOURCES: Record<string, LabSource> = {
+  "Kagan Lab": { id: "kagan", name: "Kagan Lab", shortName: "Kagan", institution: "Cortical Labs", pi: "Brett Kagan", website: "https://corticallabs.com" },
+  "Muotri Lab": { id: "muotri", name: "Muotri Lab", shortName: "Muotri", institution: "UC San Diego", pi: "Alysson Muotri", website: "https://muotri.medschool.ucsd.edu" },
+  "FinalSpark": { id: "finalspark", name: "FinalSpark", shortName: "FinalSpark", institution: "FinalSpark SA (Vevey)", pi: "Fred Jordan, Martin Kutter", website: "https://finalspark.com" },
+  "Lancaster Lab": { id: "lancaster", name: "Lancaster Lab", shortName: "Lancaster", institution: "MRC LMB Cambridge", pi: "Madeline Lancaster" },
+  "BrainXell": { id: "brainxell", name: "BrainXell", shortName: "BrainXell", institution: "BrainXell Inc.", pi: "Commercial vendor", website: "https://brainxell.com" },
+  "Knoblich Lab": { id: "knoblich", name: "Knoblich Lab", shortName: "Knoblich", institution: "IMBA Vienna", pi: "Juergen Knoblich" },
+  "Finkbeiner Lab": { id: "finkbeiner", name: "Finkbeiner Lab", shortName: "Finkbeiner", institution: "Gladstone Institutes", pi: "Steven Finkbeiner" },
+  "Independent Consortium": { id: "indep", name: "Independent Consortium", shortName: "Independent", institution: "Cross-institution", pi: "Multiple" },
+  "OI Consortium": { id: "oi", name: "OI Consortium", shortName: "OI", institution: "Johns Hopkins and partners", pi: "Thomas Hartung" },
+  "Indiana Bloomington": { id: "indiana", name: "Indiana Bloomington", shortName: "Indiana", institution: "Indiana University Bloomington", pi: "Feng Guo" },
+  "Pasca Lab": { id: "pasca", name: "Pasca Lab", shortName: "Pasca", institution: "Stanford", pi: "Sergiu Pasca" },
+  "Quadros Lab": { id: "quadros", name: "Quadros Lab", shortName: "Quadros", institution: "ETH Zurich", pi: "R. Quadros" },
+  "Koch Lab": { id: "koch", name: "Koch Lab", shortName: "Koch", institution: "Max Planck Florida", pi: "C. Koch" },
+  "Hartung Lab": { id: "hartung", name: "Hartung Lab", shortName: "Hartung", institution: "Johns Hopkins", pi: "Thomas Hartung" },
+  "Multi-site": { id: "multisite", name: "Multi-site", shortName: "Multi-site", institution: "Cross-institution", pi: "Multiple" },
+  "Chen Lab (Indiana)": { id: "chen", name: "Chen Lab (Indiana)", shortName: "Chen", institution: "Indiana University", pi: "Feng Guo" },
+};
+
+export const CHANGELOG: { version: string; date: string; changes: string[] }[] = [
+  {
+    version: "v1.3.0", date: "2026-04-02",
+    changes: [
+      "Decoder-only baseline now required for closed-loop learning submissions.",
+      "Signal-quality track: artifact rate added as a required metric (was optional).",
+      "Methodology version bumped, composite re-computed for 12 affected entries.",
+    ],
+  },
+  {
+    version: "v1.2.1", date: "2026-02-17",
+    changes: [
+      "Clarified retention-track definition: re-exposure at 24h and 7d both required for grade A.",
+      "Added 4 entries from the cross-lab plasticity consortium.",
+    ],
+  },
+  {
+    version: "v1.2.0", date: "2025-12-08",
+    changes: [
+      "Reproducibility track added as a first-class benchmark.",
+      "Independent-replication control is now scored separately from batch replication.",
+    ],
+  },
+  {
+    version: "v1.1.0", date: "2025-09-14",
+    changes: [
+      "Grade bands rebalanced after 18 months of entries.",
+      "Provisional flag introduced for entries without peer-reviewed publication.",
+    ],
+  },
+  {
+    version: "v1.0.0", date: "2025-06-01",
+    changes: [
+      "Initial public release with 5 tracks, 12 systems, 6 datasets.",
+    ],
+  },
+];
 
 export const searchIndex = [
   ...SYSTEMS.map((s) => ({ type: "system", id: s.id, title: s.name, subtitle: `${s.source} · ${s.track}`, href: `/systems/${s.id}` })),

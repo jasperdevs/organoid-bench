@@ -112,7 +112,7 @@ export default async function SystemPage({
             <Panel title="Recording & stimulation">
               <KV k="Platform" v={s.platform} />
               <KV k="Stimulation" v={s.stimMethod} />
-              <KV k="Decoder" v={s.decoder ?? "—"} />
+              <KV k="Decoder" v={s.decoder ?? "-"} />
               <KV k="Preprocessing" v={s.preprocessing} />
             </Panel>
             <Panel title="Sample size">
@@ -258,5 +258,5 @@ function KV({ k, v, mono }: { k: string; v: React.ReactNode; mono?: boolean }) {
 }
 
 function fmt(v: number) {
-  return v === 0 ? "—" : v.toFixed(2);
+  return v === 0 ? "-" : v.toFixed(2);
 }
