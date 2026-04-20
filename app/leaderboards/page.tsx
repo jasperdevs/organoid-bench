@@ -92,7 +92,7 @@ export default async function LeaderboardsPage(props: {
                   <th className="px-4 py-3 font-medium">Source</th>
                   <th className="px-4 py-3 font-medium">Controls</th>
                   <th className="px-4 py-3 font-medium">Status</th>
-                  <th className="px-4 py-3 font-medium text-right">Composite</th>
+                  <th className="px-4 py-3 font-medium text-right">Score</th>
                 </tr>
               </thead>
               <tbody>
@@ -133,7 +133,10 @@ export default async function LeaderboardsPage(props: {
                       <StatusBadge status={e.runStatus} />
                     </td>
                     <td className="px-4 py-3 font-mono text-xs text-right">
-                      {e.compositeScore != null ? e.compositeScore.toFixed(2) : "insufficient data"}
+                      {e.trackScore != null ? e.trackScore.toFixed(2) : "unscored"}
+                      {e.confidenceGrade ? (
+                        <span className="ml-2 text-[color:var(--foreground-muted)]">{e.confidenceGrade}</span>
+                      ) : null}
                     </td>
                   </tr>
                 ))}

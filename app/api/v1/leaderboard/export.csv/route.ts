@@ -34,6 +34,7 @@ export async function GET() {
     "learningScore",
     "retentionScore",
     "reproducibilityScore",
+    "trackScore",
     "compositeScore",
     "confidenceGrade",
     "verificationStatus",

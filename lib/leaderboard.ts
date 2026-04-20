@@ -48,6 +48,7 @@ export type LeaderboardEntry = {
   learningScore: number | null;
   retentionScore: number | null;
   reproducibilityScore: number | null;
+  trackScore: number | null;
   compositeScore: number | null;
   confidenceGrade: string | null;
   verificationStatus: string;
@@ -101,7 +102,25 @@ export async function getLeaderboardEntries(
     const scoreByType = new Map(
       r.scoreCalculations.map((sc) => [sc.scoreType, sc.score ?? null] as const),
     );
+    const confidenceByType = new Map(
+      r.scoreCalculations.map((sc) => [sc.scoreType, sc.confidenceGrade ?? null] as const),
+    );
     const composite = r.scoreCalculations.find((sc) => sc.scoreType === "composite");
+    const trackScoreType =
+      r.track.slug === "signal-quality"
+        ? "signal"
+        : r.track.slug === "responsiveness"
+          ? "response"
+          : r.track.slug === "plasticity"
+            ? "plasticity"
+            : r.track.slug === "closed-loop-learning"
+              ? "learning"
+              : r.track.slug === "retention"
+                ? "retention"
+                : r.track.slug === "reproducibility"
+                  ? "repro"
+                  : "composite";
+    const trackScore = scoreByType.get(trackScoreType) ?? null;
     const controlsPassedCount = r.runControls.filter((rc) => rc.passed === true).length;
     const controlsTotalCount = r.runControls.length;
 
@@ -138,8 +157,9 @@ export async function getLeaderboardEntries(
       learningScore: scoreByType.get("learning") ?? null,
       retentionScore: scoreByType.get("retention") ?? null,
       reproducibilityScore: scoreByType.get("repro") ?? null,
+      trackScore,
       compositeScore: composite?.score ?? null,
-      confidenceGrade: composite?.confidenceGrade ?? null,
+      confidenceGrade: confidenceByType.get(trackScoreType) ?? composite?.confidenceGrade ?? null,
       verificationStatus: r.system.verificationStatus,
       runStatus: r.runStatus,
       methodologyVersion: r.methodologyVersion?.version ?? null,

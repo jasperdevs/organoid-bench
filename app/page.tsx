@@ -3,6 +3,7 @@ import { Container, PageHeader, Section } from "@/components/ui/section";
 import { EmptyState, StatusBadge } from "@/components/ui/empty-state";
 import { prisma } from "@/lib/db";
 import { getLeaderboardEntries } from "@/lib/leaderboard";
+import { HomeDashboard } from "@/app/home-dashboard";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,7 @@ export default async function HomePage() {
     runCount,
     recentEntries,
     recentEvents,
+    datasets,
   ] = await Promise.all([
     prisma.benchmarkTrack.count(),
     prisma.system.count(),
@@ -25,7 +27,31 @@ export default async function HomePage() {
     prisma.benchmarkRun.count(),
     getLeaderboardEntries({ limit: 6 }),
     prisma.provenanceEvent.findMany({ orderBy: { createdAt: "desc" }, take: 20 }),
+    prisma.dataset.findMany({
+      select: {
+        rawDataAvailable: true,
+        processedDataAvailable: true,
+        metadataAvailable: true,
+        codeAvailable: true,
+      },
+    }),
   ]);
+
+  const scoreRows = recentEntries.map((entry) => ({
+    systemSlug: entry.systemSlug,
+    systemName: entry.systemName,
+    trackName: entry.trackName,
+    runStatus: entry.runStatus,
+    score: entry.trackScore,
+    confidenceGrade: entry.confidenceGrade,
+  }));
+
+  const availability = [
+    { label: "Raw", value: datasets.filter((d) => d.rawDataAvailable).length },
+    { label: "Processed", value: datasets.filter((d) => d.processedDataAvailable).length },
+    { label: "Metadata", value: datasets.filter((d) => d.metadataAvailable).length },
+    { label: "Code", value: datasets.filter((d) => d.codeAvailable).length },
+  ];
 
   return (
     <>
@@ -59,6 +85,10 @@ export default async function HomePage() {
         </div>
       </Container>
 
+      <Container>
+        <HomeDashboard scores={scoreRows} availability={availability} />
+      </Container>
+
       <Section
         title="Published runs"
         right={
@@ -83,7 +113,7 @@ export default async function HomePage() {
                   <th className="px-4 py-3 font-medium">Lab</th>
                   <th className="px-4 py-3 font-medium">Track</th>
                   <th className="px-4 py-3 font-medium">Status</th>
-                  <th className="px-4 py-3 font-medium text-right">Composite</th>
+                  <th className="px-4 py-3 font-medium text-right">Score</th>
                 </tr>
               </thead>
               <tbody>
@@ -104,7 +134,7 @@ export default async function HomePage() {
                       <StatusBadge status={e.runStatus} />
                     </td>
                     <td className="px-4 py-3 font-mono text-xs text-right">
-                      {e.compositeScore != null ? e.compositeScore.toFixed(2) : "insufficient data"}
+                      {e.trackScore != null ? e.trackScore.toFixed(2) : "unscored"}
                     </td>
                   </tr>
                 ))}

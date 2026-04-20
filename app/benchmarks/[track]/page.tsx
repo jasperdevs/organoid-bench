@@ -118,7 +118,10 @@ export default async function TrackPage({
                         {trackScore != null ? trackScore.toFixed(2) : "-"}
                       </td>
                       <td className="px-4 py-3 font-mono text-xs text-right">
-                        {e.compositeScore != null ? e.compositeScore.toFixed(2) : "-"}
+                        {e.trackScore != null ? e.trackScore.toFixed(2) : "-"}
+                        {e.confidenceGrade ? (
+                          <span className="ml-2 text-[color:var(--foreground-muted)]">{e.confidenceGrade}</span>
+                        ) : null}
                       </td>
                     </tr>
                   );

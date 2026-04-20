@@ -264,7 +264,7 @@ test("public copy avoids unsupported cognition claims except explicit exclusions
     const body = read(file);
     assert.doesNotMatch(body, /consciousness score|AGI|human-like intelligence ranking/i, file);
     if (/sentience/i.test(body)) {
-      assert.match(body, /does not measure consciousness, sentience, or general intelligence|Not a consciousness or sentience benchmark/i, file);
+      assert.match(body, /does not measure consciousness, sentience, or general intelligence|does not make claims about consciousness or sentience|Not a consciousness or sentience benchmark/i, file);
     }
   }
 });
@@ -315,6 +315,40 @@ test("dataset file storage status remains remote only in ingesters", () => {
   const figshare = read("scripts/ingest-figshare.ts");
   assert.match(zenodo, /storageStatus: "remote_only"/);
   assert.match(figshare, /storageStatus: "remote_only"/);
+});
+
+test("computed local score rows include CI and input-file provenance when local db has scores", () => {
+  if (!fs.existsSync(path.join(root, "dev.db"))) return;
+  const Database = require("better-sqlite3");
+  const db = new Database(path.join(root, "dev.db"), { readonly: true });
+  const scoreCount = db.prepare("SELECT COUNT(*) count FROM ScoreCalculation").get().count;
+  if (scoreCount === 0) return;
+  const rows = db
+    .prepare(
+      `SELECT MetricValue.derivationMethod, MetricValue.ciLow, MetricValue.ciHigh, ScoreCalculation.methodologyVersionId, ScoreCalculation.calculationJson
+       FROM ScoreCalculation JOIN MetricValue ON MetricValue.benchmarkRunId = ScoreCalculation.benchmarkRunId`,
+    )
+    .all();
+  assert.ok(rows.length > 0);
+  for (const row of rows) {
+    assert.equal(row.derivationMethod, "computed");
+    assert.ok(row.ciLow != null);
+    assert.ok(row.ciHigh != null);
+    assert.ok(row.methodologyVersionId);
+    const calc = JSON.parse(row.calculationJson);
+    assert.ok(Array.isArray(calc.inputFiles));
+    assert.ok(calc.inputFiles.length > 0);
+    assert.ok(calc.inputFiles[0].checksumValue);
+    assert.ok(calc.scriptName);
+    assert.equal(calc.methodologyVersion, "0.1");
+  }
+});
+
+test("refresh commands exist and default to local dry-run capable behavior", () => {
+  assert.match(read("package.json"), /sources:refresh/);
+  assert.match(read("package.json"), /scores:refresh/);
+  assert.match(read("scripts/sources-refresh.mjs"), /--target=local/);
+  assert.match(read("scripts/scores-refresh.mjs"), /needs_recompute/);
 });
 
 test("source and dataset pages expose source-backed unscored states", () => {

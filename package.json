@@ -25,6 +25,13 @@
     "ingest:github": "tsx scripts/ingest-github.ts",
     "ingest:source": "tsx scripts/ingest-source.ts",
     "curate:submission": "tsx scripts/curate-submission.ts",
+    "score:inspect:goal-directed": "python scripts/scoring/inspect_goal_directed.py",
+    "score:inspect:kcl-well-average": "python scripts/scoring/inspect_kcl_well_average.py",
+    "score:compute:goal-directed": "python scripts/scoring/compute_goal_directed.py",
+    "score:compute:kcl-well-average": "python scripts/scoring/compute_kcl_signal.py",
+    "sources:refresh": "node scripts/sources-refresh.mjs",
+    "scores:refresh": "node scripts/scores-refresh.mjs",
+    "db:preview:sync-scores": "node scripts/sync-preview-scores.mjs",
     "test": "tsx --test tests/*.test.ts"
   },
   "dependencies": {
