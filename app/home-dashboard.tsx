@@ -20,9 +20,15 @@ type AvailabilityRow = {
 export function HomeDashboard({
   scores,
   availability,
+  summary,
 }: {
   scores: ScoreRow[];
   availability: AvailabilityRow[];
+  summary: {
+    datasetCount: number;
+    sourceCount: number;
+    runCount: number;
+  };
 }) {
   const scoreBars: Bar[] = scores
     .filter((row) => row.score != null)
@@ -40,12 +46,12 @@ export function HomeDashboard({
   }));
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-[1.4fr_0.9fr] gap-4">
-      <section className="rounded-[12px] border border-[color:var(--border)] bg-[color:var(--surface)] overflow-hidden">
+    <div className="grid grid-cols-1 xl:grid-cols-[1.35fr_0.9fr] gap-4">
+      <section className="rounded-[12px] border border-[color:var(--border)] bg-[color:var(--surface)] overflow-hidden min-h-[390px]">
         <div className="flex items-center justify-between gap-3 border-b border-[color:var(--border)] px-5 py-4">
           <div>
-            <h2 className="font-serif text-2xl leading-tight">Provisional scores</h2>
-            <p className="mt-1 text-sm text-[color:var(--foreground-muted)]">Local computed rows by benchmark track.</p>
+            <h2 className="font-serif text-2xl leading-tight">Highlights</h2>
+            <p className="mt-1 text-sm text-[color:var(--foreground-muted)]">Provisional track scores from reviewed local data.</p>
           </div>
           <Link href="/leaderboards" className="text-sm font-medium underline underline-offset-4">
             Leaderboard
@@ -57,6 +63,14 @@ export function HomeDashboard({
       </section>
 
       <aside className="flex flex-col gap-4">
+        <section className="rounded-[12px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5">
+          <div className="grid grid-cols-3 gap-px overflow-hidden rounded-[8px] border border-[color:var(--border)] bg-[color:var(--border)]">
+            <MiniStat label="Datasets" value={summary.datasetCount} />
+            <MiniStat label="Sources" value={summary.sourceCount} />
+            <MiniStat label="Runs" value={summary.runCount} />
+          </div>
+        </section>
+
         <section className="rounded-[12px] border border-[color:var(--border)] bg-[color:var(--surface)] overflow-hidden">
           <div className="border-b border-[color:var(--border)] px-5 py-4">
             <h2 className="font-serif text-xl leading-tight">Data coverage</h2>
@@ -79,6 +93,15 @@ export function HomeDashboard({
           </a>
         </section>
       </aside>
+    </div>
+  );
+}
+
+function MiniStat({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="bg-[color:var(--surface)] p-3">
+      <div className="text-[11px] text-[color:var(--foreground-muted)]">{label}</div>
+      <div className="mt-1 font-mono text-lg">{value}</div>
     </div>
   );
 }
