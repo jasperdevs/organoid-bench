@@ -8,23 +8,56 @@ export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const [
-    datasetCount,
-    sourceCount,
-    runCount,
     recentEntries,
     datasets,
+    sources,
+    tracks,
   ] = await Promise.all([
-    prisma.dataset.count(),
-    prisma.source.count(),
-    prisma.benchmarkRun.count(),
     getLeaderboardEntries({ limit: 6 }),
     prisma.dataset.findMany({
       select: {
+        id: true,
+        name: true,
+        slug: true,
+        sizeBytes: true,
         rawDataAvailable: true,
         processedDataAvailable: true,
         metadataAvailable: true,
         codeAvailable: true,
+        files: {
+          select: {
+            id: true,
+            sizeBytes: true,
+          },
+        },
       },
+      orderBy: { updatedAt: "desc" },
+    }),
+    prisma.source.findMany({
+      select: {
+        id: true,
+        title: true,
+        url: true,
+        doi: true,
+        repositoryType: true,
+        datasets: {
+          select: {
+            id: true,
+          },
+        },
+      },
+      orderBy: { updatedAt: "desc" },
+      take: 8,
+    }),
+    prisma.benchmarkTrack.findMany({
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        tasks: { select: { id: true } },
+        runs: { select: { id: true, runStatus: true } },
+      },
+      orderBy: { sortOrder: "asc" },
     }),
   ]);
 
@@ -45,12 +78,52 @@ export default async function HomePage() {
     { label: "Code", value: datasets.filter((d) => d.codeAvailable).length },
   ];
 
+  const sourcePlatformMap = new Map<string, number>();
+  for (const source of sources) {
+    const key = source.repositoryType ?? "other";
+    sourcePlatformMap.set(key, (sourcePlatformMap.get(key) ?? 0) + 1);
+  }
+
+  const sourcePlatforms = Array.from(sourcePlatformMap.entries()).map(([label, value]) => ({
+    label,
+    value,
+  }));
+
+  const fileInventory = datasets
+    .map((dataset) => ({
+      label: dataset.name,
+      slug: dataset.slug,
+      fileCount: dataset.files.length,
+      totalBytes: dataset.files.reduce(
+        (sum, file) => sum + Number(file.sizeBytes ?? 0),
+        0,
+      ),
+    }))
+    .sort((a, b) => b.fileCount - a.fileCount)
+    .slice(0, 8);
+
+  const trackRows = tracks.map((track) => ({
+    slug: track.slug,
+    name: track.name,
+    taskCount: track.tasks.length,
+    provisionalRunCount: track.runs.filter((run) => run.runStatus === "provisional").length,
+  }));
+
+  const sourceRows = sources.map((source) => ({
+    id: source.id,
+    title: source.title,
+    url: source.url,
+    doi: source.doi,
+    repositoryType: source.repositoryType,
+    datasetCount: source.datasets.length,
+  }));
+
   return (
     <>
       <PageHeader
-        eyebrow="Brain organoid benchmarks"
+        eyebrow="Brain organoid benchmark"
         title="OrganoidBench"
-        description="A benchmark for brain organoid systems."
+        description="Compare brain organoid systems with source-backed data and provisional track scores."
         right={
           <div className="flex gap-2 flex-wrap justify-end">
             <Link
@@ -70,7 +143,10 @@ export default async function HomePage() {
         <HomeDashboard
           scores={scoreRows}
           availability={availability}
-          summary={{ datasetCount, sourceCount, runCount }}
+          sourcePlatforms={sourcePlatforms}
+          fileInventory={fileInventory}
+          tracks={trackRows}
+          sources={sourceRows}
         />
       </Container>
     </>
