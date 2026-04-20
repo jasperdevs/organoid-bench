@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Container } from "@/components/ui/section";
+import { GitHubIcon, XIcon } from "@/components/brand-icons";
 
 const columns = [
   {
@@ -25,8 +26,6 @@ const columns = [
     links: [
       { href: "/about", label: "Overview" },
       { href: "/docs", label: "API" },
-      { href: "https://github.com/jasperdevs/organoid-bench", label: "GitHub" },
-      { href: "https://x.com/jasperdevs", label: "X: @jasperdevs" },
     ],
   },
 ];
@@ -76,14 +75,14 @@ export function SiteFooter() {
               className="inline-flex h-9 w-9 items-center justify-center border border-[rgba(255,255,255,0.35)] hover:bg-[color:var(--background)] hover:text-[color:var(--foreground)]"
               aria-label="GitHub"
             >
-              GH
+              <GitHubIcon className="h-4 w-4" />
             </a>
             <a
               href="https://x.com/jasperdevs"
               className="inline-flex h-9 w-9 items-center justify-center border border-[rgba(255,255,255,0.35)] hover:bg-[color:var(--background)] hover:text-[color:var(--foreground)]"
               aria-label="X"
             >
-              X
+              <XIcon className="h-4 w-4" />
             </a>
           </div>
         </div>

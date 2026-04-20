@@ -232,7 +232,8 @@ test("submit cards point to the right issue templates", () => {
 test("footer links @jasperdevs", () => {
   const body = read("components/site-footer.tsx");
   assert.match(body, /https:\/\/x\.com\/jasperdevs/);
-  assert.match(body, /@jasperdevs/);
+  assert.match(body, /XIcon/);
+  assert.match(body, /GitHubIcon/);
 });
 
 test("email is not used as a public contact or submission path", () => {

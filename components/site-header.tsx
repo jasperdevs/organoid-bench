@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Container } from "@/components/ui/section";
 import { getGithubRepo } from "@/lib/github-config";
+import { GitHubIcon } from "@/components/brand-icons";
 
 const nav = [
   { href: "/leaderboards", label: "Leaderboard" },
@@ -58,8 +59,9 @@ export function SiteHeader() {
           <div className="ml-auto flex items-center gap-2">
             <a
               href={submitHref}
-              className="hidden sm:inline-flex items-center rounded-full bg-[color:var(--foreground)] text-[color:var(--background)] px-4 py-2 text-sm font-medium hover:opacity-90"
+              className="hidden sm:inline-flex items-center gap-2 rounded-full bg-[color:var(--foreground)] text-[color:var(--background)] px-4 py-2 text-sm font-medium hover:opacity-90"
             >
+              <GitHubIcon className="h-4 w-4" />
               Submit entry
             </a>
           </div>
