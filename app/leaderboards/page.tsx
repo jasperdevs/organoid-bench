@@ -30,7 +30,7 @@ export default async function LeaderboardsPage(props: {
         title={activeTrack ? activeTrack.name : "All tracks"}
         description={
           methodology
-            ? `Ranked under methodology v${methodology.version}. Only rows with status published, provisional, or scored appear.`
+            ? "Reviewed benchmark runs only."
             : "No current methodology is loaded."
         }
         right={
@@ -69,16 +69,14 @@ export default async function LeaderboardsPage(props: {
       <Section>
         {entries.length === 0 ? (
           <EmptyState
-            title={activeTrack ? `No published entries on ${activeTrack.name}` : "No published entries"}
+            title="No verified benchmark runs are available yet."
             body={
               <>
-                Filters: {sp.track ? <code className="font-mono">track={sp.track}</code> : "none"}. The
-                leaderboard excludes draft, unscored, disputed, and deprecated rows. Disputed rows appear on
-                their system detail page only.
+                Source-backed datasets and systems will appear after curator review.
               </>
             }
             primaryHref="/submit"
-            primaryLabel="Submit an entry"
+            primaryLabel="Submit"
             secondaryHref="/methodology"
             secondaryLabel="Methodology"
           />

@@ -1,0 +1,35 @@
+name: Task request
+description: Request a new OrganoidBench benchmark task.
+title: "Task request: "
+labels: ["task-request", "needs-review"]
+body:
+  - type: input
+    id: contact
+    attributes:
+      label: Contact
+  - type: input
+    id: proposed-task-name
+    attributes:
+      label: Proposed task name
+    validations:
+      required: true
+  - type: textarea
+    id: what-it-measures
+    attributes:
+      label: What it measures
+  - type: textarea
+    id: required-data
+    attributes:
+      label: Required data
+  - type: textarea
+    id: required-controls
+    attributes:
+      label: Required controls
+  - type: textarea
+    id: similar-papers-sources
+    attributes:
+      label: Similar papers/sources
+  - type: textarea
+    id: why-it-belongs
+    attributes:
+      label: Why it belongs in OrganoidBench

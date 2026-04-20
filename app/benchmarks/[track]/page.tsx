@@ -61,9 +61,9 @@ export default async function TrackPage({
         {entries.length === 0 ? (
           <EmptyState
             title="No entries on this track yet"
-            body="This track is seeded and ready to receive submissions. A source-backed benchmark run that passes review will appear here."
+            body="Reviewed benchmark runs will appear here."
             primaryHref="/submit"
-            primaryLabel="Submit an entry"
+            primaryLabel="Submit"
           />
         ) : (
           <div className="w-full overflow-x-auto rounded-[12px] border border-[color:var(--border)] bg-[color:var(--surface)]">
@@ -160,7 +160,7 @@ export default async function TrackPage({
             {track.scoringFormula}
             {methodology && (
               <div className="mt-3 text-xs font-mono text-[color:var(--foreground-muted)]">
-                Methodology v{methodology.version}
+                Current methodology
               </div>
             )}
           </div>

@@ -1,4 +1,5 @@
 import { getLeaderboardEntries } from "@/lib/leaderboard";
+import { cacheHeaders } from "@/lib/http-cache";
 
 function csvEscape(v: unknown): string {
   if (v === null || v === undefined) return "";
@@ -51,6 +52,7 @@ export async function GET() {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
       "Content-Disposition": 'attachment; filename="organoidbench-leaderboard.csv"',
+      ...Object.fromEntries(cacheHeaders({ profile: "short" })),
     },
   });
 }

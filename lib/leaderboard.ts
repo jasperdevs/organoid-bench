@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { PUBLIC_RUN_STATUSES } from "@/lib/status-guards";
 
 /**
  * leaderboard_entries_v (logical view).
@@ -13,8 +14,6 @@ import { prisma } from "@/lib/db";
  * are excluded from the default leaderboard and surfaced on detail pages
  * only.
  */
-
-const PUBLIC_RUN_STATUSES = ["published", "provisional", "scored"] as const;
 
 export type LeaderboardEntry = {
   systemId: string;

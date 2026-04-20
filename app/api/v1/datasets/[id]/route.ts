@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { cachedJson, noStoreJson } from "@/lib/http-cache";
 
 export async function GET(
   _req: Request,
@@ -16,11 +16,11 @@ export async function GET(
       provenanceEvents: { orderBy: { createdAt: "desc" } },
     },
   });
-  if (!dataset) return NextResponse.json({ error: "not_found", id }, { status: 404 });
+  if (!dataset) return noStoreJson({ error: "not_found", id }, { status: 404 });
   const payload = {
     ...dataset,
     sizeBytes: dataset.sizeBytes?.toString() ?? null,
     files: dataset.files.map((f) => ({ ...f, sizeBytes: f.sizeBytes?.toString() ?? null })),
   };
-  return NextResponse.json({ dataset: payload });
+  return cachedJson({ dataset: payload }, { profile: "medium" });
 }

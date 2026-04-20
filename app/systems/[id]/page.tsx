@@ -75,7 +75,7 @@ export default async function SystemDetail({
                 )}
               </>
             ) : (
-              <span className="text-[color:var(--foreground-muted)]">no source cited. This system cannot be ranked.</span>
+              <span className="text-[color:var(--foreground-muted)]">no source cited</span>
             )}
           </Panel>
           <Panel title="Dataset">
@@ -151,7 +151,7 @@ export default async function SystemDetail({
         </div>
       </Section>
 
-      <Section title="Benchmark runs" description="One scored evaluation per row. Unscored rows show their status, not a fabricated score.">
+      <Section title="Benchmark runs">
         {system.runs.length === 0 ? (
           <div className="rounded-[12px] border border-dashed border-[color:var(--border-strong)] bg-[color:var(--surface)] p-6 text-sm text-[color:var(--foreground-muted)]">
             No benchmark runs recorded for this system yet.

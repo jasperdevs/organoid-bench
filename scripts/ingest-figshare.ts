@@ -1,6 +1,24 @@
 // Ingest a Figshare article by ID.
 // Usage: npm run ingest:figshare -- --article 12345678 [--org "Lab Name"]
-import { prisma, fetchJson, slugify, uniqueSlug, requireArg, optArg, parseBytes } from "./_ingest-common";
+import {
+  applyRemoteSql,
+  buildDatasetFileReplaceSql,
+  buildDatasetUpsertSql,
+  buildOrganizationUpsertSql,
+  buildProvenanceSql,
+  buildSourceUpsertSql,
+  fetchJson,
+  jsonStringify,
+  optArg,
+  parseBytes,
+  parseChecksum,
+  parseIngestOptions,
+  prisma,
+  requireArg,
+  slugify,
+  stableId,
+  uniqueSlug,
+} from "./_ingest-common";
 
 type FigshareAuthor = { full_name?: string; orcid_id?: string };
 type FigshareFile = {
@@ -27,7 +45,9 @@ type FigshareArticle = {
 
 async function main() {
   const argv = process.argv.slice(2);
-  const articleId = requireArg(argv, "--article");
+  const options = parseIngestOptions(argv);
+  const articleArg = optArg(argv, "--article") ?? optArg(argv, "--url") ?? requireArg(argv, "--article");
+  const articleId = articleArg.match(/articles\/[^/]+\/(\d+)/)?.[1] ?? articleArg.match(/articles\/(\d+)/)?.[1] ?? articleArg;
   const orgName = optArg(argv, "--org");
 
   console.log(`Fetching Figshare article ${articleId}...`);
@@ -38,9 +58,81 @@ async function main() {
   const license = rec.license?.name ?? null;
   const sourceUrl = rec.url_public_html ?? `https://figshare.com/articles/${articleId}`;
 
-  const organization = orgName
+  const organizationId = orgName ? stableId("org", orgName) : null;
+  const organization = orgName && options.target === "local" && !options.dryRun
     ? await prisma.organization.upsert({ where: { name: orgName }, update: {}, create: { name: orgName } })
     : null;
+
+  const sourceId = stableId("source", rec.doi ?? `figshare:${articleId}`);
+  const sourceInput = {
+    id: sourceId,
+    kind: "figshare",
+    doi: rec.doi ?? `figshare:${articleId}`,
+    title: rec.title,
+    url: sourceUrl,
+    year,
+    authors: authors.length ? JSON.stringify(authors) : null,
+    licenseName: license,
+    licenseUrl: rec.license?.url ?? null,
+    repositoryType: "figshare",
+    reviewStatus: "none",
+    organizationId: organization?.id ?? organizationId,
+    metadataJson: JSON.stringify(rec).slice(0, 200_000),
+  };
+
+  if (options.dryRun || options.target === "remote") {
+    const titleSlug = slugify(rec.title).slice(0, 60).replace(/-+$/g, "");
+    const baseSlug = `${titleSlug}-figshare-${articleId}`;
+    const datasetId = stableId("dataset", baseSlug);
+    const files = rec.files ?? [];
+    const totalBytes = files.reduce((acc, f) => acc + (typeof f.size === "number" ? f.size : 0), 0);
+    const datasetInput = {
+      id: datasetId,
+      sourceId,
+      organizationId: organization?.id ?? organizationId,
+      name: rec.title,
+      slug: baseSlug,
+      description: rec.description?.slice(0, 4000) ?? null,
+      licenseName: license,
+      accessStatus: "open",
+      rawDataAvailable: files.length > 0,
+      metadataAvailable: true,
+      dataUrl: sourceUrl,
+      externalId: String(articleId),
+      sizeBytes: parseBytes(totalBytes),
+      verificationStatus: "source_verified",
+    };
+    const fileInputs = files.map((f, i) => ({
+      ...parseChecksum(f.computed_md5 ? `md5:${f.computed_md5}` : null),
+      id: stableId("file", `${datasetId}-${f.name ?? f.id ?? i}`),
+      path: f.name ?? `file-${f.id ?? "unknown"}`,
+      format: (f.mimetype ?? f.name?.split(".").pop() ?? null)?.slice(0, 32) ?? null,
+      sizeBytes: parseBytes(f.size),
+      url: f.download_url ?? null,
+    }));
+    console.log(jsonStringify({ target: options.target, dryRun: options.dryRun, source: sourceInput, dataset: datasetInput, files: fileInputs.length }));
+    if (options.target === "remote") {
+      const sql = [
+        "BEGIN;",
+        orgName && organizationId ? buildOrganizationUpsertSql(organizationId, orgName) : null,
+        buildSourceUpsertSql(sourceInput),
+        buildDatasetUpsertSql(datasetInput),
+        buildDatasetFileReplaceSql(datasetId, fileInputs),
+        buildProvenanceSql({
+          id: stableId("prov", `figshare-${articleId}-${Date.now()}`),
+          eventType: "imported",
+          message: `Imported Figshare article ${articleId}`,
+          actor: "system:ingest-figshare",
+          sourceId,
+          datasetId,
+          payloadJson: JSON.stringify({ articleId, files: files.length, bytes: totalBytes }),
+        }),
+        "COMMIT;",
+      ].filter(Boolean).join("\n");
+      applyRemoteSql(sql, "ingest-figshare", options);
+    }
+    return;
+  }
 
   const source = await prisma.source.upsert({
     where: { doi: rec.doi ?? `figshare:${articleId}` },
@@ -74,7 +166,8 @@ async function main() {
     },
   });
 
-  const baseSlug = slugify(`${rec.title}-figshare-${articleId}`);
+  const titleSlug = slugify(rec.title).slice(0, 60).replace(/-+$/g, "");
+  const baseSlug = `${titleSlug}-figshare-${articleId}`;
   const slug = await uniqueSlug(baseSlug, async (s) => !!(await prisma.dataset.findUnique({ where: { slug: s } })));
 
   const files = rec.files ?? [];
@@ -122,8 +215,9 @@ async function main() {
         path: f.name ?? `file-${f.id ?? "unknown"}`,
         format: (f.mimetype ?? f.name?.split(".").pop() ?? null)?.slice(0, 32) ?? null,
         sizeBytes: parseBytes(f.size),
-        checksumSha256: null,
+        ...parseChecksum(f.computed_md5 ? `md5:${f.computed_md5}` : null),
         url: f.download_url ?? null,
+        storageStatus: "remote_only",
       })),
     });
   }

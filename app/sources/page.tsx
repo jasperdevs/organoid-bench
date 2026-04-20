@@ -20,15 +20,15 @@ export default async function SourcesIndex() {
       <PageHeader
         eyebrow="Sources"
         title="Papers, preprints, and data records"
-        description="Every benchmark entry links to a source record: a paper, preprint, Zenodo/Figshare/DANDI record, or formal lab submission. No source, no entry."
+        description="Sources include papers, preprints, dataset records, code repositories, and reviewed lab submissions."
       />
       <Container>
         {sources.length === 0 ? (
           <EmptyState
             title="No sources ingested yet"
-            body="Sources enter through npm run ingest:zenodo, ingest:figshare, ingest:github, or ingest:source. Each ingestion stores exactly what the public API returns."
-            primaryHref="/docs"
-            primaryLabel="Read docs"
+            body="Source-backed records will appear after curator review."
+            primaryHref="/submit"
+            primaryLabel="Submit"
           />
         ) : (
           <div className="rounded-[12px] border border-[color:var(--border)] overflow-hidden bg-[color:var(--surface)]">

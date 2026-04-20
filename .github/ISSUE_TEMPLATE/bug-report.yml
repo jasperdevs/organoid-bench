@@ -1,0 +1,33 @@
+name: Bug report
+description: Report a site or API bug.
+title: "Bug: "
+labels: ["bug", "site"]
+body:
+  - type: input
+    id: page-api-endpoint
+    attributes:
+      label: Page/API endpoint
+    validations:
+      required: true
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected behavior
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: screenshot-logs
+    attributes:
+      label: Screenshot/logs
+  - type: input
+    id: browser-environment
+    attributes:
+      label: Browser/environment
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes

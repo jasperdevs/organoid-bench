@@ -1,6 +1,18 @@
 // Ingest a GitHub repository as a Source (code repo).
 // Usage: npm run ingest:github -- --repo owner/name [--org "Lab Name"]
-import { prisma, fetchJson, requireArg, optArg } from "./_ingest-common";
+import {
+  applyRemoteSql,
+  buildOrganizationUpsertSql,
+  buildProvenanceSql,
+  buildSourceUpsertSql,
+  fetchJson,
+  jsonStringify,
+  optArg,
+  parseIngestOptions,
+  prisma,
+  requireArg,
+  stableId,
+} from "./_ingest-common";
 
 type GhRepo = {
   id: number;
@@ -22,6 +34,7 @@ type GhRepo = {
 
 async function main() {
   const argv = process.argv.slice(2);
+  const options = parseIngestOptions(argv);
   const repo = requireArg(argv, "--repo");
   const orgName = optArg(argv, "--org");
 
@@ -37,11 +50,56 @@ async function main() {
   console.log(`Fetching GitHub repo ${repo}...`);
   const gh = await fetchJson<GhRepo>(`https://api.github.com/repos/${repo}`, headers);
 
-  const organization = orgName
+  const organizationId = orgName ? stableId("org", orgName) : null;
+  const organization = orgName && options.target === "local" && !options.dryRun
     ? await prisma.organization.upsert({ where: { name: orgName }, update: {}, create: { name: orgName } })
     : null;
 
   const doiLike = `github:${gh.full_name}`;
+  const sourceId = stableId("source", doiLike);
+  const sourceInput = {
+    id: sourceId,
+    kind: "github",
+    doi: doiLike,
+    title: gh.full_name,
+    url: gh.html_url,
+    year: gh.pushed_at ? Number(gh.pushed_at.slice(0, 4)) : null,
+    licenseName: gh.license?.name ?? gh.license?.spdx_id ?? null,
+    licenseUrl: gh.license?.url ?? null,
+    repositoryType: "git",
+    reviewStatus: "none",
+    organizationId: organization?.id ?? organizationId,
+    abstractText: gh.description ?? null,
+    metadataJson: JSON.stringify(gh).slice(0, 200_000),
+  };
+
+  if (options.dryRun || options.target === "remote") {
+    console.log(jsonStringify({ target: options.target, dryRun: options.dryRun, source: sourceInput }));
+    if (options.target === "remote") {
+      const sql = [
+        "BEGIN;",
+        orgName && organizationId ? buildOrganizationUpsertSql(organizationId, orgName) : null,
+        buildSourceUpsertSql(sourceInput),
+        buildProvenanceSql({
+          id: stableId("prov", `github-${gh.full_name}-${Date.now()}`),
+          eventType: "imported",
+          message: `Imported GitHub repository ${gh.full_name}`,
+          actor: "system:ingest-github",
+          sourceId,
+          payloadJson: JSON.stringify({
+            repo: gh.full_name,
+            stars: gh.stargazers_count,
+            forks: gh.forks_count,
+            archived: gh.archived,
+          }),
+        }),
+        "COMMIT;",
+      ].filter(Boolean).join("\n");
+      applyRemoteSql(sql, "ingest-github", options);
+    }
+    return;
+  }
+
   const source = await prisma.source.upsert({
     where: { doi: doiLike },
     update: {

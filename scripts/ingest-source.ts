@@ -1,6 +1,18 @@
 // Ingest a paper or preprint by DOI. Tries Crossref, then DataCite.
 // Usage: npm run ingest:source -- --doi 10.1038/s41586-022-00000-0 [--org "Lab Name"]
-import { prisma, fetchJson, requireArg, optArg } from "./_ingest-common";
+import {
+  applyRemoteSql,
+  buildOrganizationUpsertSql,
+  buildProvenanceSql,
+  buildSourceUpsertSql,
+  fetchJson,
+  jsonStringify,
+  optArg,
+  parseIngestOptions,
+  prisma,
+  requireArg,
+  stableId,
+} from "./_ingest-common";
 
 type CrossrefMessage = {
   DOI: string;
@@ -67,12 +79,18 @@ async function tryDataCite(doi: string): Promise<DataCiteAttributes | null> {
 
 async function main() {
   const argv = process.argv.slice(2);
-  const doi = requireArg(argv, "--doi").replace(/^doi:/i, "").trim();
+  const options = parseIngestOptions(argv);
+  const doi = (optArg(argv, "--doi") ?? optArg(argv, "--url") ?? requireArg(argv, "--doi"))
+    .replace(/^https:\/\/doi\.org\//i, "")
+    .replace(/^doi:/i, "")
+    .trim();
   const orgName = optArg(argv, "--org");
 
-  const organization = orgName
-    ? await prisma.organization.upsert({ where: { name: orgName }, update: {}, create: { name: orgName } })
-    : null;
+  const organizationId = orgName ? stableId("org", orgName) : null;
+  const organization =
+    orgName && options.target === "local" && !options.dryRun
+      ? await prisma.organization.upsert({ where: { name: orgName }, update: {}, create: { name: orgName } })
+      : null;
 
   console.log(`Resolving DOI ${doi} via Crossref...`);
   const cross = await tryCrossref(doi);
@@ -123,6 +141,63 @@ async function main() {
   if (!title) {
     console.error(`Resolved DOI ${doi} but no title present.`);
     process.exit(1);
+  }
+
+  const sourceInput = {
+    id: stableId("source", doi),
+    kind,
+    doi,
+    title,
+    url: sourceUrl ?? null,
+    year: year ?? null,
+    venue,
+    authors: authors.length ? JSON.stringify(authors) : null,
+    licenseName: license,
+    reviewStatus: kind === "preprint" ? "preprint" : "none",
+    organizationId: organization?.id ?? organizationId,
+    abstractText: abstractText?.slice(0, 8000) ?? null,
+    metadataJson: JSON.stringify(raw).slice(0, 200_000),
+  };
+
+  if (options.dryRun) {
+    console.log(jsonStringify({ target: options.target, dryRun: true, source: sourceInput }));
+    if (options.target === "remote") {
+      const sql = [
+        "BEGIN;",
+        orgName && organizationId ? buildOrganizationUpsertSql(organizationId, orgName) : null,
+        buildSourceUpsertSql(sourceInput),
+        buildProvenanceSql({
+          id: stableId("prov", `source-${doi}-${Date.now()}`),
+          eventType: "imported",
+          message: `Imported source for DOI ${doi}`,
+          actor: "system:ingest-source",
+          sourceId: sourceInput.id,
+          payloadJson: JSON.stringify({ doi, kind, year, authors: authors.length }),
+        }),
+        "COMMIT;",
+      ].filter(Boolean).join("\n");
+      applyRemoteSql(sql, "ingest-source", options);
+    }
+    return;
+  }
+
+  if (options.target === "remote") {
+    const sql = [
+      "BEGIN;",
+      orgName && organizationId ? buildOrganizationUpsertSql(organizationId, orgName) : null,
+      buildSourceUpsertSql(sourceInput),
+      buildProvenanceSql({
+        id: stableId("prov", `source-${doi}-${Date.now()}`),
+        eventType: "imported",
+        message: `Imported source for DOI ${doi}`,
+        actor: "system:ingest-source",
+        sourceId: sourceInput.id,
+        payloadJson: JSON.stringify({ doi, kind, year, authors: authors.length }),
+      }),
+      "COMMIT;",
+    ].filter(Boolean).join("\n");
+    applyRemoteSql(sql, "ingest-source", options);
+    return;
   }
 
   const source = await prisma.source.upsert({

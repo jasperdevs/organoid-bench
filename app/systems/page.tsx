@@ -22,17 +22,15 @@ export default async function SystemsIndex() {
       <PageHeader
         eyebrow="Systems"
         title="Registered systems"
-        description="A system is the full experimental setup: organoid preparation, recording setup, stimulation protocol, task, controls, dataset, and source citation. Systems without a source never reach this page."
+        description="Systems connect a source-backed preparation, recording setup, task, controls, and dataset."
       />
       <Container>
         {systems.length === 0 ? (
           <EmptyState
             title="No systems registered yet"
-            body="The registry is empty. Systems enter only through the submission workflow or ingestion of a verified source."
+            body="Systems will appear after source-backed curator review."
             primaryHref="/submit"
-            primaryLabel="Submit an entry"
-            secondaryHref="/docs"
-            secondaryLabel="Read API docs"
+            primaryLabel="Submit"
           />
         ) : (
           <div className="w-full overflow-x-auto rounded-[12px] border border-[color:var(--border)] bg-[color:var(--surface)]">

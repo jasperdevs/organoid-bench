@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { cachedJson, noStoreJson } from "@/lib/http-cache";
 
 export async function GET(
   _req: Request,
@@ -10,10 +10,10 @@ export async function GET(
     where: { OR: [{ id }, { slug: id }] },
     select: { id: true },
   });
-  if (!system) return NextResponse.json({ error: "not_found", id }, { status: 404 });
+  if (!system) return noStoreJson({ error: "not_found", id }, { status: 404 });
   const events = await prisma.provenanceEvent.findMany({
     where: { systemId: system.id },
     orderBy: { createdAt: "desc" },
   });
-  return NextResponse.json({ systemId: system.id, count: events.length, events });
+  return cachedJson({ systemId: system.id, count: events.length, events }, { profile: "medium" });
 }

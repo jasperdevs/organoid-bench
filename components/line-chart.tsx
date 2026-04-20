@@ -26,6 +26,9 @@ export function LineChart({
   yMax?: number;
 }) {
   const [hover, setHover] = useState<{ seriesId: string; x: number; y: number; label: string; xLabel: string } | null>(null);
+  if (series.length === 0 || xLabels.length === 0) {
+    return <EmptyChartState height={height} />;
+  }
   const width = 820;
   const pad = { top: 22, right: 20, bottom: 52, left: 44 };
   const plotW = width - pad.left - pad.right;
@@ -129,6 +132,17 @@ export function LineChart({
           </span>
         ))}
       </div>
+    </div>
+  );
+}
+
+function EmptyChartState({ height }: { height: number }) {
+  return (
+    <div
+      className="w-full rounded-[12px] border border-dashed border-[color:var(--border-strong)] bg-[color:var(--surface)] flex items-center justify-center text-sm text-[color:var(--foreground-muted)]"
+      style={{ minHeight: height }}
+    >
+      No chart data available.
     </div>
   );
 }

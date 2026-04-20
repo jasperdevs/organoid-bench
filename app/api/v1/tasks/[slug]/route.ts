@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { cachedJson, noStoreJson } from "@/lib/http-cache";
 
 export async function GET(
   _req: Request,
@@ -21,6 +21,6 @@ export async function GET(
       },
     },
   });
-  if (!task) return NextResponse.json({ error: "not_found", slug }, { status: 404 });
-  return NextResponse.json({ task });
+  if (!task) return noStoreJson({ error: "not_found", slug }, { status: 404 });
+  return cachedJson({ task }, { profile: "long" });
 }

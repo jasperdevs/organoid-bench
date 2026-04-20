@@ -36,6 +36,9 @@ export function ScatterChart({
   onPointClick?: (p: ScatterPoint) => void;
 }) {
   const [hover, setHover] = useState<ScatterPoint | null>(null);
+  if (points.length === 0) {
+    return <EmptyChartState height={height} />;
+  }
   const xs = points.map((p) => p.x);
   const _xMin = xMin ?? Math.min(...xs);
   const _xMax = xMax ?? Math.max(...xs);
@@ -123,6 +126,17 @@ export function ScatterChart({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function EmptyChartState({ height }: { height: number }) {
+  return (
+    <div
+      className="w-full rounded-[12px] border border-dashed border-[color:var(--border-strong)] bg-[color:var(--surface)] flex items-center justify-center text-sm text-[color:var(--foreground-muted)]"
+      style={{ minHeight: height }}
+    >
+      No chart data available.
     </div>
   );
 }

@@ -1,0 +1,59 @@
+-- Idempotent remote D1 seed for canonical OrganoidBench taxonomy.
+-- This intentionally seeds only methodology, tracks, tasks, metrics, and controls.
+-- It does not create sources, datasets, systems, runs, metric values, scores, or fake scientific data.
+
+INSERT INTO "MethodologyVersion" ("id","version","releasedAt","summary","changelog","formulaJson","isCurrent","createdAt","updatedAt")
+VALUES ('methodology_1_0_0','1.0.0',datetime('now'),'Initial public methodology. Per-track scores are raw; composite is not yet computed until cross-lab replication data is available.','Initial release. Tracks, metrics, tasks, and control vocabulary established.','{"composite":{"note":"Composite is suppressed until a run has at least one published metric in every track.","weights":{"signal-quality":0.15,"responsiveness":0.15,"plasticity":0.2,"closed-loop-learning":0.2,"retention":0.15,"reproducibility":0.15}}}',1,datetime('now'),datetime('now'))
+ON CONFLICT("version") DO UPDATE SET "isCurrent"=1,"updatedAt"=excluded."updatedAt";
+
+INSERT INTO "BenchmarkTrack" ("id","slug","name","description","rationale","scoringFormula","sortOrder","createdAt","updatedAt") VALUES
+('track_signal_quality','signal-quality','Signal Quality','Electrophysiological recording fidelity from the preparation: SNR, channel yield, spike sortability.','A closed-loop system cannot score above its recording floor. Signal quality is the baseline precondition for every downstream claim.','Composite of normalized SNR, active-channel ratio, and spike-sorting unit yield. Equal weights per sub-metric, clipped to [0, 1].',10,datetime('now'),datetime('now')),
+('track_responsiveness','responsiveness','Responsiveness','Does input change output? Evoked response magnitude, latency, and selectivity under matched controls.','Responsiveness separates preparations that merely produce spontaneous activity from those whose activity is contingent on input.','Weighted mean of evoked-vs-sham effect size (z-scored), response latency (inverted), and input-pattern selectivity (d-prime).',20,datetime('now'),datetime('now')),
+('track_plasticity','plasticity','Plasticity','Does repeated input durably change the input-to-output mapping? Open-loop plasticity with matched controls.','Plasticity is the mechanistic substrate any learning claim depends on. Without paired/unpaired controls, drift and adaptation look identical.','Post-minus-pre response change normalized by sham-matched change. Requires paired-vs-unpaired control to score.',30,datetime('now'),datetime('now')),
+('track_closed_loop_learning','closed-loop-learning','Closed-Loop Learning','Task performance under stimulus-contingent feedback, versus matched no-feedback control.','Closed-loop performance improvement (vs control) is the field''s operational definition of stimulus-contingent adaptation at the task level. Not a claim about internal cognition.','Performance improvement over training (feedback minus no-feedback), z-scored against a batch-level null distribution.',40,datetime('now'),datetime('now')),
+('track_retention','retention','Retention','Does an induced change persist? Re-test at fixed delays against matched pre-induction baseline.','Retention is how a plasticity or learning claim transitions from change to memory. Requires specified delays and no intervening exposure.','Retained effect at 1h/24h/7d expressed as fraction of immediate post-induction effect. Score is weighted mean across delays.',50,datetime('now'),datetime('now')),
+('track_reproducibility','reproducibility','Reproducibility','Are results stable across batches and labs? Within-lab and cross-lab coefficient of variation on headline metric.','Per-track scores without reproducibility data hide cross-batch variance. This track is a first-class citizen, not a footnote.','1 minus normalized coefficient of variation across batches (within-lab) and across labs (cross-lab). Both must be reported for a full score.',60,datetime('now'),datetime('now'))
+ON CONFLICT("slug") DO UPDATE SET "name"=excluded."name","description"=excluded."description","rationale"=excluded."rationale","scoringFormula"=excluded."scoringFormula","sortOrder"=excluded."sortOrder","updatedAt"=excluded."updatedAt";
+
+INSERT INTO "Metric" ("id","slug","name","description","unit","direction","trackId","createdAt","updatedAt") VALUES
+('metric_snr_db','snr_db','Spike SNR','Median spike signal-to-noise ratio across active channels.','dB','higher_better','track_signal_quality',datetime('now'),datetime('now')),
+('metric_active_channel_ratio','active_channel_ratio','Active channel ratio','Fraction of electrodes with at least one detected unit.','ratio','higher_better','track_signal_quality',datetime('now'),datetime('now')),
+('metric_units_per_array','units_per_array','Sorted units per array','Number of well-isolated single units after spike sorting.','units','higher_better','track_signal_quality',datetime('now'),datetime('now')),
+('metric_isi_violation_rate','isi_violation_rate','ISI violation rate','Fraction of inter-spike intervals below the refractory threshold.','ratio','lower_better','track_signal_quality',datetime('now'),datetime('now')),
+('metric_evoked_effect_size','evoked_effect_size','Evoked response effect size','Cohen''s d between evoked and sham-matched spike counts.','d','higher_better','track_responsiveness',datetime('now'),datetime('now')),
+('metric_response_latency_ms','response_latency_ms','Response latency','Median first-spike latency after stimulus onset.','ms','lower_better','track_responsiveness',datetime('now'),datetime('now')),
+('metric_pattern_selectivity_dprime','pattern_selectivity_dprime','Pattern selectivity','d-prime between responses to different stimulus patterns.','d''','higher_better','track_responsiveness',datetime('now'),datetime('now')),
+('metric_paired_unpaired_delta','paired_unpaired_delta','Paired vs unpaired delta','Response change in paired condition minus unpaired control.','delta','higher_better','track_plasticity',datetime('now'),datetime('now')),
+('metric_induction_half_life_min','induction_half_life_min','Induction half-life','Time for paired-minus-unpaired effect to reach half maximum.','min','lower_better','track_plasticity',datetime('now'),datetime('now')),
+('metric_terminal_performance_delta','terminal_performance_delta','Terminal performance delta','Final block performance in feedback condition minus no-feedback control.','delta','higher_better','track_closed_loop_learning',datetime('now'),datetime('now')),
+('metric_learning_curve_auc','learning_curve_auc','Learning curve AUC','Area under the performance-over-time curve, feedback minus control.','auc','higher_better','track_closed_loop_learning',datetime('now'),datetime('now')),
+('metric_retention_1h','retention_1h','Retention at 1h','Effect retained after 1 hour, as fraction of immediate post.','ratio','higher_better','track_retention',datetime('now'),datetime('now')),
+('metric_retention_24h','retention_24h','Retention at 24h','Effect retained after 24 hours, as fraction of immediate post.','ratio','higher_better','track_retention',datetime('now'),datetime('now')),
+('metric_retention_7d','retention_7d','Retention at 7d','Effect retained after 7 days, as fraction of immediate post.','ratio','higher_better','track_retention',datetime('now'),datetime('now')),
+('metric_within_lab_cv','within_lab_cv','Within-lab CV','Coefficient of variation across batches within a single lab.','cv','lower_better','track_reproducibility',datetime('now'),datetime('now')),
+('metric_cross_lab_cv','cross_lab_cv','Cross-lab CV','Coefficient of variation across labs running the same protocol.','cv','lower_better','track_reproducibility',datetime('now'),datetime('now')),
+('metric_n_replications','n_replications','Independent replications','Number of independent labs that have replicated the result.','count','higher_better','track_reproducibility',datetime('now'),datetime('now'))
+ON CONFLICT("slug") DO UPDATE SET "name"=excluded."name","description"=excluded."description","unit"=excluded."unit","direction"=excluded."direction","trackId"=excluded."trackId","updatedAt"=excluded."updatedAt";
+
+INSERT INTO "Task" ("id","slug","name","description","trackId","createdAt","updatedAt") VALUES
+('task_baseline_recording','baseline-recording','Baseline recording','Spontaneous activity recording with no stimulation.','track_signal_quality',datetime('now'),datetime('now')),
+('task_stimulated_recording','stimulated-recording','Stimulated recording','Recording during controlled stimulation protocol.','track_signal_quality',datetime('now'),datetime('now')),
+('task_evoked_vs_sham','evoked-vs-sham','Evoked vs sham','Paired evoked and sham stimulation sessions.','track_responsiveness',datetime('now'),datetime('now')),
+('task_pattern_discrimination','pattern-discrimination','Pattern discrimination','Multiple stimulus patterns, discrimination scored by decoder or d-prime.','track_responsiveness',datetime('now'),datetime('now')),
+('task_paired_induction','paired-induction','Paired induction','Paired pre/post stimulation protocol with unpaired control.','track_plasticity',datetime('now'),datetime('now')),
+('task_closed_loop_pong','closed-loop-pong','Closed-loop Pong-like task','Paddle control task with stimulus-contingent feedback.','track_closed_loop_learning',datetime('now'),datetime('now')),
+('task_closed_loop_2afc','closed-loop-2afc','Closed-loop 2AFC','Two-alternative forced choice with feedback-gated reward signal.','track_closed_loop_learning',datetime('now'),datetime('now')),
+('task_delayed_retest','delayed-retest','Delayed retest','Re-test at one or more fixed delays after induction.','track_retention',datetime('now'),datetime('now')),
+('task_replication_panel','replication-panel','Replication panel','Same protocol, multiple batches, reported across labs when available.','track_reproducibility',datetime('now'),datetime('now'))
+ON CONFLICT("slug") DO UPDATE SET "name"=excluded."name","description"=excluded."description","trackId"=excluded."trackId","updatedAt"=excluded."updatedAt";
+
+INSERT INTO "Control" ("id","slug","name","description","category","createdAt","updatedAt") VALUES
+('control_sham_matched','sham-matched','Sham-matched stimulation','Active condition paired with sham (open-loop scrambled) stimulation at matched rate.','stimulation',datetime('now'),datetime('now')),
+('control_blinded_scoring','blinded-scoring','Blinded scoring','Performance scored by analyst blinded to condition identity.','analysis',datetime('now'),datetime('now')),
+('control_batch_null_distribution','batch-null-distribution','Batch-level null','Effect compared against a null distribution built from within-batch permutations.','statistical',datetime('now'),datetime('now')),
+('control_media_only_control','media-only-control','Media-only control','Preparation recorded with media changes only, no stimulation.','biological',datetime('now'),datetime('now')),
+('control_dead_organoid_control','dead-organoid-control','Inactive preparation control','Recording from fixed or inactive preparation to rule out setup artifacts.','biological',datetime('now'),datetime('now')),
+('control_unpaired_stimulation','unpaired-stimulation','Unpaired stimulation','Input and feedback signals delivered independently at matched rates.','stimulation',datetime('now'),datetime('now')),
+('control_drift_correction','drift-correction','Drift correction','Baseline drift modeled and subtracted before effect estimation.','analysis',datetime('now'),datetime('now')),
+('control_protocol_preregistration','protocol-preregistration','Protocol preregistration','Analysis protocol registered before data collection.','statistical',datetime('now'),datetime('now'))
+ON CONFLICT("slug") DO UPDATE SET "name"=excluded."name","description"=excluded."description","category"=excluded."category","updatedAt"=excluded."updatedAt";

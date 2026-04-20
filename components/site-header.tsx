@@ -3,16 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Container } from "@/components/ui/section";
+import { getGithubRepo } from "@/lib/github-config";
 
 const nav = [
   { href: "/leaderboards", label: "Leaderboard" },
-  { href: "/benchmarks", label: "Tracks" },
-  { href: "/systems", label: "Systems" },
-  { href: "/datasets", label: "Datasets" },
-  { href: "/sources", label: "Sources" },
-  { href: "/organizations", label: "Labs" },
-  { href: "/methodology", label: "Methodology" },
-  { href: "/docs", label: "API" },
+  { href: "/benchmarks", label: "Benchmarks" },
+  { href: "/datasets", label: "Data" },
+  { href: "/about", label: "About" },
 ];
 
 function isActive(pathname: string, href: string) {
@@ -22,6 +19,8 @@ function isActive(pathname: string, href: string) {
 
 export function SiteHeader() {
   const pathname = usePathname() ?? "/";
+  const githubRepo = getGithubRepo();
+  const submitHref = `https://github.com/${githubRepo}/issues/new/choose`;
   return (
     <header className="sticky top-0 z-40 bg-[color:var(--background)] border-b border-[color:var(--border)]">
       <Container>
@@ -58,7 +57,7 @@ export function SiteHeader() {
 
           <div className="ml-auto flex items-center gap-2">
             <a
-              href="mailto:jasper.mceligott@gmail.com?subject=OrganoidBench%20submission"
+              href={submitHref}
               className="hidden sm:inline-flex items-center rounded-full bg-[color:var(--foreground)] text-[color:var(--background)] px-4 py-2 text-sm font-medium hover:opacity-90"
             >
               Submit entry

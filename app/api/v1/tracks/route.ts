@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { cachedJson } from "@/lib/http-cache";
 
 export async function GET() {
   const tracks = await prisma.benchmarkTrack.findMany({
@@ -10,5 +10,5 @@ export async function GET() {
       _count: { select: { runs: true } },
     },
   });
-  return NextResponse.json({ count: tracks.length, tracks });
+  return cachedJson({ count: tracks.length, tracks }, { profile: "long" });
 }

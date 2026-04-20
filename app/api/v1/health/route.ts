@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { cachedJson, noStoreJson } from "@/lib/http-cache";
 
 export async function GET() {
   try {
@@ -12,7 +12,7 @@ export async function GET() {
         prisma.benchmarkRun.count(),
         prisma.methodologyVersion.findFirst({ where: { isCurrent: true } }),
       ]);
-    return NextResponse.json({
+    return cachedJson({
       status: "ok",
       generatedAt: new Date().toISOString(),
       database: "connected",
@@ -26,9 +26,9 @@ export async function GET() {
       methodology: methodology
         ? { version: methodology.version, releasedAt: methodology.releasedAt }
         : null,
-    });
+    }, { profile: "short" });
   } catch (err) {
-    return NextResponse.json(
+    return noStoreJson(
       {
         status: "error",
         database: "unreachable",

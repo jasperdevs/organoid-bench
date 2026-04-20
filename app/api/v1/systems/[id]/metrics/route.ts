@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { cachedJson, noStoreJson } from "@/lib/http-cache";
 
 export async function GET(
   _req: Request,
@@ -10,7 +10,7 @@ export async function GET(
     where: { OR: [{ id }, { slug: id }] },
     select: { id: true },
   });
-  if (!system) return NextResponse.json({ error: "not_found", id }, { status: 404 });
+  if (!system) return noStoreJson({ error: "not_found", id }, { status: 404 });
   const values = await prisma.metricValue.findMany({
     where: { benchmarkRun: { systemId: system.id } },
     include: {
@@ -20,5 +20,5 @@ export async function GET(
     },
     orderBy: { updatedAt: "desc" },
   });
-  return NextResponse.json({ systemId: system.id, count: values.length, metrics: values });
+  return cachedJson({ systemId: system.id, count: values.length, metrics: values }, { profile: "medium" });
 }

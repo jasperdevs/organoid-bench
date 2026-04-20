@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
+import { cachedJson } from "@/lib/http-cache";
 
 export async function GET(request: NextRequest) {
   const sp = request.nextUrl.searchParams;
@@ -15,5 +15,5 @@ export async function GET(request: NextRequest) {
     orderBy: { updatedAt: "desc" },
     take: limit,
   });
-  return NextResponse.json({ count: sources.length, sources });
+  return cachedJson({ count: sources.length, sources }, { profile: "medium" });
 }

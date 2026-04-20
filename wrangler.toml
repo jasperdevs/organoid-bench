@@ -1,0 +1,24 @@
+name = "organoidbench"
+main = ".open-next/worker.js"
+compatibility_date = "2025-03-01"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+
+# Assets produced by OpenNext (static files + Next.js public/).
+assets = { directory = ".open-next/assets", binding = "ASSETS" }
+
+# Custom domain. This attaches organoidbench.com directly to the Worker.
+# The zone must already exist on this Cloudflare account (organoidbench.com).
+routes = [
+  { pattern = "organoidbench.com", custom_domain = true },
+  { pattern = "www.organoidbench.com", custom_domain = true },
+]
+
+# D1 binding → access as env.DB inside the Worker.
+[[d1_databases]]
+binding = "DB"
+database_name = "organoidbench"
+database_id = "a84ad33a-92e0-4b0d-adaa-a86c080d71c7"
+
+# Observability
+[observability]
+enabled = true

@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { cachedJson, noStoreJson } from "@/lib/http-cache";
 
 export async function GET(
   _req: Request,
@@ -10,7 +10,7 @@ export async function GET(
     where: { OR: [{ id }, { slug: id }] },
     select: { id: true },
   });
-  if (!dataset) return NextResponse.json({ error: "not_found", id }, { status: 404 });
+  if (!dataset) return noStoreJson({ error: "not_found", id }, { status: 404 });
   const systems = await prisma.system.findMany({
     where: { datasetId: dataset.id },
     include: {
@@ -18,5 +18,5 @@ export async function GET(
       task: { select: { slug: true, name: true } },
     },
   });
-  return NextResponse.json({ datasetId: dataset.id, count: systems.length, systems });
+  return cachedJson({ datasetId: dataset.id, count: systems.length, systems }, { profile: "medium" });
 }

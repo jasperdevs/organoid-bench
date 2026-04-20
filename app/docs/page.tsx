@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { Container, PageHeader, Section } from "@/components/ui/section";
 import { prisma } from "@/lib/db";
+import { CANONICAL_SUBMISSION_EXAMPLE } from "@/lib/submissions";
 
 export const dynamic = "force-dynamic";
 
@@ -37,93 +37,64 @@ const SYSTEM_SHAPE = `{
   "id": "",
   "slug": "",
   "name": "",
-  "source_id": "",
-  "dataset_id": "",
-  "organization_id": "",
-  "task_id": "",
-  "verification_status": "unscored",
-  "organoid_preparation_id": null,
-  "recording_setup_id": null,
-  "stimulation_protocol_id": null,
+  "sourceId": "",
+  "datasetId": "",
+  "organizationId": "",
+  "taskId": "",
+  "verificationStatus": "unscored",
+  "organoidPreparationId": null,
+  "recordingSetupId": null,
+  "stimulationProtocolId": null,
   "limitations": null,
   "runs": [],
   "provenance": [],
-  "created_at": "",
-  "updated_at": ""
+  "createdAt": "",
+  "updatedAt": ""
 }`;
 
 const RUN_SHAPE = `{
   "id": "",
-  "system_id": "",
-  "track_id": "",
-  "task_id": "",
-  "methodology_version_id": "",
-  "run_status": "unscored",
-  "n_organoids": null,
-  "n_sessions": null,
-  "n_batches": null,
-  "n_labs": null,
-  "data_completeness_score": null,
-  "metric_values": [],
-  "run_controls": [],
-  "score_calculations": [
+  "systemId": "",
+  "trackId": "",
+  "taskId": "",
+  "methodologyVersionId": "",
+  "runStatus": "unscored",
+  "nOrganoids": null,
+  "nSessions": null,
+  "nBatches": null,
+  "nLabs": null,
+  "dataCompletenessScore": null,
+  "metricValues": [],
+  "runControls": [],
+  "scoreCalculations": [
     {
-      "score_type": "composite",
+      "scoreType": "composite",
       "score": null,
-      "confidence_grade": null
+      "confidenceGrade": null
     }
   ],
-  "run_date": null
+  "runDate": null
 }`;
 
 const METRIC_VALUE_SHAPE = `{
   "id": "",
-  "benchmark_run_id": "",
-  "metric_id": "",
+  "benchmarkRunId": "",
+  "metricId": "",
   "value": 0,
-  "normalized_value": null,
-  "ci_low": null,
-  "ci_high": null,
-  "ci_method": null,
-  "derivation_method": "extracted_from_paper | computed_from_data | submitted | curator_calculated",
-  "derivation_notes": null,
-  "source_id": null,
-  "code_version": null
-}`;
-
-const SUBMISSION_SHAPE = `{
-  "submitter_email": "",
-  "submitter_name": "",
-  "proposed_system_name": "",
-  "proposed_track_slug": "",
-  "proposed_task_slug": "",
-  "source_url": "",
-  "dataset_url": "",
-  "code_url": null,
-  "organization_name": null,
-  "organoid_preparation": {
-    "cell_line": null,
-    "brain_region": null,
-    "div_range": null,
-    "protocol_reference": null
-  },
-  "recording_setup": {
-    "platform": null,
-    "channel_count": null,
-    "sampling_rate_hz": null,
-    "spike_sorter": null
-  },
-  "stimulation_protocol": null,
-  "metrics": [],
-  "controls": [],
-  "limitations": null
+  "normalizedValue": null,
+  "ciLow": null,
+  "ciHigh": null,
+  "ciMethod": null,
+  "derivationMethod": "computed | extracted_from_paper | submitted | curator_estimated",
+  "derivationNotes": null,
+  "sourceId": null,
+  "codeVersion": null
 }`;
 
 const SECTIONS = [
   { id: "overview", label: "Overview" },
   { id: "endpoints", label: "Endpoints" },
-  { id: "shapes", label: "Response shapes" },
-  { id: "submit", label: "Submit" },
+  { id: "submission", label: "Submission" },
   { id: "status", label: "Status vocabulary" },
 ];
 
@@ -138,7 +109,7 @@ export default async function DocsPage() {
       <PageHeader
         eyebrow="API"
         title="OrganoidBench API"
-        description="Every page on this site reads the same JSON. Responses are schema-shaped. When a field is unknown, the API returns null, not a placeholder value."
+        description="Read-only registry data and structured submission endpoints."
       />
 
       <Container>
@@ -162,10 +133,10 @@ export default async function DocsPage() {
               <h2 className="font-serif text-2xl leading-tight mb-3">Overview</h2>
               <div className="text-[14px] leading-relaxed text-[color:var(--foreground-muted)] space-y-3">
                 <p>
-                  The API is read-only except for <code className="font-mono text-xs">POST /api/v1/submissions</code> and <code className="font-mono text-xs">POST /api/v1/corrections</code>. All read endpoints are unauthenticated and JSON.
+                  Public pages read from the same D1-backed registry data exposed here.
                 </p>
                 <p>
-                  Every field that is unverified or unmeasured returns <code className="font-mono text-xs">null</code>. A run with <code className="font-mono text-xs">run_status: "unscored"</code> has no composite score. Fabricated values are never written to fill a schema.
+                  Unknown or unmeasured fields return <code className="font-mono text-xs">null</code>.
                 </p>
                 {methodology && (
                   <p>
@@ -199,26 +170,16 @@ export default async function DocsPage() {
               </div>
             </section>
 
-            <section id="shapes" className="scroll-mt-24">
-              <h2 className="font-serif text-2xl leading-tight mb-3">Response shapes</h2>
-              <p className="text-[14px] leading-relaxed text-[color:var(--foreground-muted)] mb-5">
-                Examples are schema-shaped, not real records. Fields that would require a measurement are null. Intentional: an empty shape is more honest than a fake record dressed up as science.
-              </p>
-
-              <ShapeBlock title="System" path="GET /api/v1/systems/{id_or_slug}" body={SYSTEM_SHAPE} />
-              <ShapeBlock title="Benchmark run" path="embedded in system.runs[]" body={RUN_SHAPE} />
-              <ShapeBlock title="Metric value" path="embedded in run.metric_values[]" body={METRIC_VALUE_SHAPE} />
-            </section>
-
-            <section id="submit" className="scroll-mt-24">
-              <h2 className="font-serif text-2xl leading-tight mb-3">Submitting a result</h2>
+            <section id="submission" className="scroll-mt-24">
+              <h2 className="font-serif text-2xl leading-tight mb-3">Submission</h2>
               <p className="text-[14px] leading-relaxed text-[color:var(--foreground-muted)] mb-3">
-                POST to <code className="font-mono text-xs">/api/v1/submissions</code> with a JSON body matching the shape below. The submission is queued for review and surfaces in the submissions log. Nothing is auto-published.
+                Public submissions use GitHub Issues. The API endpoint is for structured intake.
               </p>
-              <ShapeBlock title="Submission body" path="POST /api/v1/submissions" body={SUBMISSION_SHAPE} />
-              <p className="text-[14px] leading-relaxed text-[color:var(--foreground-muted)] mt-3">
-                For email-based submissions see <Link href="/submit" className="underline">/submit</Link>.
-              </p>
+              <ShapeBlock
+                title="Submission body"
+                path="POST /api/v1/submissions"
+                body={JSON.stringify(CANONICAL_SUBMISSION_EXAMPLE, null, 2)}
+              />
             </section>
 
             <section id="status" className="scroll-mt-24">
@@ -242,10 +203,10 @@ export default async function DocsPage() {
                 <StatusList
                   title="Derivation method (metric values)"
                   items={[
+                    ["computed", "Computed from source-backed data or code."],
                     ["extracted_from_paper", "Reported in a source paper."],
-                    ["computed_from_data", "Recomputed from ingested files."],
                     ["submitted", "Submitter provided the value."],
-                    ["curator_calculated", "Manually computed from the source."],
+                    ["curator_estimated", "Curator estimate from source-backed evidence."],
                   ]}
                 />
               </div>

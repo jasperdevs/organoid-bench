@@ -1,0 +1,71 @@
+name: Benchmark result
+description: Submit benchmark result data for curator review.
+title: "Benchmark result: "
+labels: ["submission", "benchmark-result", "needs-review"]
+body:
+  - type: input
+    id: contact
+    attributes:
+      label: Contact
+  - type: input
+    id: affiliation
+    attributes:
+      label: Affiliation
+  - type: input
+    id: system-name
+    attributes:
+      label: System name
+    validations:
+      required: true
+  - type: input
+    id: source-url
+    attributes:
+      label: Source URL
+    validations:
+      required: true
+  - type: input
+    id: dataset-url
+    attributes:
+      label: Dataset URL
+  - type: input
+    id: methodology-version
+    attributes:
+      label: Methodology version
+  - type: input
+    id: benchmark-track
+    attributes:
+      label: Benchmark track
+  - type: input
+    id: task
+    attributes:
+      label: Task
+  - type: textarea
+    id: metric-values
+    attributes:
+      label: Metric values
+      description: Include units, confidence intervals, and where each value came from.
+  - type: textarea
+    id: controls
+    attributes:
+      label: Controls
+  - type: dropdown
+    id: derivation-method
+    attributes:
+      label: Derivation method
+      options: ["computed", "extracted_from_paper", "submitted", "curator_estimated"]
+  - type: input
+    id: code-url
+    attributes:
+      label: Code URL
+  - type: input
+    id: raw-processed-data-url
+    attributes:
+      label: Raw/processed data URL
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+  - type: textarea
+    id: limitations
+    attributes:
+      label: Limitations

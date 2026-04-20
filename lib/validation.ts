@@ -64,13 +64,24 @@ export const ReviewStatus = z.enum([
 export const SubmissionSchema = z.object({
   submitterEmail: z.string().email(),
   submitterName: z.string().min(1).max(200).optional(),
+  affiliation: z.string().max(300).optional(),
+  submissionType: z
+    .enum(["system", "dataset", "source", "benchmark_result", "correction"])
+    .optional(),
+  title: z.string().min(1).max(300).optional(),
   proposedSystemName: z.string().min(2).max(200),
   proposedTrackSlug: z.string().optional(),
   proposedTaskSlug: z.string().optional(),
+  benchmarkTrack: z.string().optional(),
+  task: z.string().optional(),
   organizationName: z.string().optional(),
   sourceUrl: z.string().url().optional(),
+  paperUrl: z.string().url().optional(),
   datasetUrl: z.string().url().optional(),
   codeUrl: z.string().url().optional(),
+  organoidType: z.string().max(200).optional(),
+  recordingPlatform: z.string().max(200).optional(),
+  notes: z.string().max(8000).optional(),
   description: z.string().max(8000).optional(),
   organoidPreparation: z
     .object({

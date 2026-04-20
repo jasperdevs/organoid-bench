@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import { getLeaderboardEntries } from "@/lib/leaderboard";
+import { cachedJson } from "@/lib/http-cache";
 
 export async function GET(
   _req: Request,
@@ -7,10 +7,10 @@ export async function GET(
 ) {
   const { slug } = await params;
   const entries = await getLeaderboardEntries({ trackSlug: slug, limit: 500 });
-  return NextResponse.json({
+  return cachedJson({
     trackSlug: slug,
     count: entries.length,
     entries,
     generatedAt: new Date().toISOString(),
-  });
+  }, { profile: "short" });
 }

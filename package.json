@@ -4,19 +4,33 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
+    "cf:build": "opennextjs-cloudflare build",
+    "cf:preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "cf:deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "cf:typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
+    "db:local:seed": "tsx prisma/seed.ts",
+    "db:local:check": "node scripts/db-check.mjs",
+    "db:remote:seed": "node scripts/warn-remote.mjs && wrangler d1 execute organoidbench --remote --file prisma/seed.sql",
+    "db:remote:check": "node scripts/db-check.mjs --remote",
+    "db:remote:tables": "node scripts/db-check.mjs --remote --tables",
+    "db:remote:counts": "node scripts/db-check.mjs --remote",
     "ingest:zenodo": "tsx scripts/ingest-zenodo.ts",
     "ingest:figshare": "tsx scripts/ingest-figshare.ts",
     "ingest:github": "tsx scripts/ingest-github.ts",
-    "ingest:source": "tsx scripts/ingest-source.ts"
+    "ingest:source": "tsx scripts/ingest-source.ts",
+    "curate:submission": "tsx scripts/curate-submission.ts",
+    "test": "tsx --test tests/*.test.ts"
   },
   "dependencies": {
+    "@opennextjs/cloudflare": "^1.19.1",
     "@prisma/adapter-better-sqlite3": "^7.7.0",
+    "@prisma/adapter-d1": "^7.7.0",
     "@prisma/client": "^7.7.0",
     "better-sqlite3": "^12.9.0",
     "next": "16.2.4",
@@ -26,12 +40,15 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260420.1",
+    "@opennextjs/aws": "^3.10.2",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wrangler": "^4.83.0"
   }
 }

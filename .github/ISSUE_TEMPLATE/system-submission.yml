@@ -1,0 +1,85 @@
+name: System submission
+description: Submit an organoid experimental system for curator review.
+title: "System submission: "
+labels: ["submission", "system", "needs-review"]
+body:
+  - type: input
+    id: contact
+    attributes:
+      label: Contact
+  - type: input
+    id: affiliation
+    attributes:
+      label: Affiliation
+  - type: input
+    id: system-name
+    attributes:
+      label: System name
+    validations:
+      required: true
+  - type: input
+    id: source-url
+    attributes:
+      label: Source URL
+    validations:
+      required: true
+  - type: input
+    id: dataset-url
+    attributes:
+      label: Dataset URL
+  - type: input
+    id: paper-url
+    attributes:
+      label: Paper/preprint URL
+  - type: input
+    id: code-url
+    attributes:
+      label: Code URL
+  - type: input
+    id: organoid-type
+    attributes:
+      label: Organoid type
+  - type: input
+    id: species-source
+    attributes:
+      label: Species/source
+  - type: input
+    id: culture-age
+    attributes:
+      label: Culture age if known
+  - type: input
+    id: recording-platform
+    attributes:
+      label: Recording platform
+  - type: input
+    id: stimulation-method
+    attributes:
+      label: Stimulation method
+  - type: input
+    id: task
+    attributes:
+      label: Task
+  - type: input
+    id: benchmark-track
+    attributes:
+      label: Benchmark track
+  - type: textarea
+    id: controls-present
+    attributes:
+      label: Controls present
+  - type: input
+    id: number-of-organoids
+    attributes:
+      label: Number of organoids
+  - type: input
+    id: number-of-sessions
+    attributes:
+      label: Number of sessions
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+  - type: textarea
+    id: limitations
+    attributes:
+      label: Limitations

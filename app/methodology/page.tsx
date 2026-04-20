@@ -36,7 +36,7 @@ export default async function MethodologyPage() {
         <Container>
           <EmptyState
             title="No methodology versions"
-            body="The database has no methodology rows. Run npm run db:seed to install the canonical methodology."
+            body="Methodology has not been loaded."
           />
         </Container>
       )}
@@ -49,7 +49,7 @@ export default async function MethodologyPage() {
         </Section>
       )}
 
-      <Section title="Tracks and metrics" description="Every published run is scored by these tracks. Composite scores require coverage across every track.">
+      <Section title="Tracks and metrics">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {tracks.map((t) => (
             <div key={t.id} className="rounded-[12px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5">

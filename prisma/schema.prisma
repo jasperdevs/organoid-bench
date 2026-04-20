@@ -105,7 +105,10 @@ model DatasetFile {
   format       String?  // nwb | h5 | mat | csv | parquet | zip | other
   sizeBytes    BigInt?
   checksumSha256 String?
+  checksumAlgorithm String?
+  checksumValue String?
   url          String?
+  storageStatus String @default("remote_only")
   createdAt    DateTime @default(now())
 }
 

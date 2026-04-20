@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { cachedJson } from "@/lib/http-cache";
 
 export async function GET() {
   const organizations = await prisma.organization.findMany({
@@ -8,5 +8,5 @@ export async function GET() {
     },
     orderBy: { name: "asc" },
   });
-  return NextResponse.json({ count: organizations.length, organizations });
+  return cachedJson({ count: organizations.length, organizations }, { profile: "medium" });
 }

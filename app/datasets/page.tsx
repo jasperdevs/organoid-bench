@@ -20,18 +20,16 @@ export default async function DatasetsIndex() {
     <>
       <PageHeader
         eyebrow="Datasets"
-        title="Benchmark-linked datasets"
-        description="Datasets are indexed by source, modality, license, and access status. Only datasets pointing to a real source URL or DOI can be ingested."
+        title="Source-backed datasets"
+        description="Datasets are indexed with source, license, access, and file metadata."
       />
       <Container>
         {datasets.length === 0 ? (
           <EmptyState
             title="No datasets ingested yet"
-            body="Run one of the ingest:* scripts against a real Zenodo, Figshare, DANDI, or GitHub record. Datasets without a verified source will never appear here."
-            primaryHref="/docs"
-            primaryLabel="Read API docs"
-            secondaryHref="/submit"
-            secondaryLabel="Submit an entry"
+            body="Source-backed datasets will appear after curator review."
+            primaryHref="/submit"
+            primaryLabel="Submit"
           />
         ) : (
           <div className="w-full overflow-x-auto rounded-[12px] border border-[color:var(--border)] bg-[color:var(--surface)]">

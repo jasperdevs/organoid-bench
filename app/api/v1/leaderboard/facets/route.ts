@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
 import { getLeaderboardFacets } from "@/lib/leaderboard";
+import { cachedJson } from "@/lib/http-cache";
 
 export async function GET() {
-  return NextResponse.json(await getLeaderboardFacets());
+  return cachedJson(await getLeaderboardFacets(), { profile: "short" });
 }

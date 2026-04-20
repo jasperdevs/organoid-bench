@@ -1,18 +1,18 @@
-import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { CorrectionSchema } from "@/lib/validation";
+import { noStoreJson } from "@/lib/http-cache";
 
 export async function POST(request: NextRequest) {
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "invalid_json" }, { status: 400 });
+    return noStoreJson({ error: "invalid_json" }, { status: 400 });
   }
   const parsed = CorrectionSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json(
+    return noStoreJson(
       { error: "validation_failed", issues: parsed.error.issues },
       { status: 422 },
     );
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     },
   });
 
-  return NextResponse.json(
+  return noStoreJson(
     {
       ok: true,
       correctionEventId: event.id,

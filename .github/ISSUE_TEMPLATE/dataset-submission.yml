@@ -1,0 +1,82 @@
+name: Dataset submission
+description: Submit a real dataset/source for OrganoidBench curator review.
+title: "Dataset submission: "
+labels: ["submission", "dataset", "needs-review"]
+body:
+  - type: input
+    id: contact
+    attributes:
+      label: Contact
+      description: Email, GitHub username, or preferred contact.
+  - type: input
+    id: affiliation
+    attributes:
+      label: Affiliation
+  - type: input
+    id: dataset-name
+    attributes:
+      label: Dataset name
+    validations:
+      required: true
+  - type: input
+    id: source-url
+    attributes:
+      label: Source URL
+    validations:
+      required: true
+  - type: input
+    id: doi-or-record-url
+    attributes:
+      label: DOI or record URL
+      description: DOI, Zenodo, Figshare, GitHub, paper, or repository URL.
+  - type: dropdown
+    id: repository-platform
+    attributes:
+      label: Repository/platform
+      options:
+        - Zenodo
+        - Figshare
+        - GitHub
+        - paper
+        - other
+  - type: input
+    id: modality
+    attributes:
+      label: Modality
+      description: MEA, calcium imaging, patch clamp, EEG, mixed, or other.
+  - type: input
+    id: organoid-type
+    attributes:
+      label: Organoid type
+  - type: dropdown
+    id: raw-data-available
+    attributes:
+      label: Raw data available
+      options: ["yes", "no", "unknown"]
+  - type: dropdown
+    id: processed-data-available
+    attributes:
+      label: Processed data available
+      options: ["yes", "no", "unknown"]
+  - type: dropdown
+    id: metadata-available
+    attributes:
+      label: Metadata available
+      options: ["yes", "no", "unknown"]
+  - type: dropdown
+    id: code-available
+    attributes:
+      label: Code available
+      options: ["yes", "no", "unknown"]
+  - type: input
+    id: license
+    attributes:
+      label: License
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+  - type: textarea
+    id: limitations
+    attributes:
+      label: Limitations

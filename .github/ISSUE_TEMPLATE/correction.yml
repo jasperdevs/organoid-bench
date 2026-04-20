@@ -1,0 +1,38 @@
+name: Correction
+description: Submit a correction to an existing OrganoidBench entry.
+title: "Correction: "
+labels: ["correction", "needs-review"]
+body:
+  - type: input
+    id: contact
+    attributes:
+      label: Contact
+  - type: input
+    id: entry-url-or-id
+    attributes:
+      label: Entry URL or ID
+    validations:
+      required: true
+  - type: textarea
+    id: what-is-wrong
+    attributes:
+      label: What is wrong
+    validations:
+      required: true
+  - type: textarea
+    id: suggested-correction
+    attributes:
+      label: Suggested correction
+  - type: input
+    id: evidence-source-url
+    attributes:
+      label: Evidence/source URL
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options: ["minor", "moderate", "major", "retraction/dispute"]
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes

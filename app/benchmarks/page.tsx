@@ -17,9 +17,9 @@ export default async function BenchmarksIndex() {
   return (
     <>
       <PageHeader
-        eyebrow="Benchmark tracks"
-        title="Six standardized tracks"
-        description="Every system is evaluated on one or more tracks. Tracks are scored independently so strong results on one dimension cannot mask weak controls on another. Track definitions are seeded from the database."
+        eyebrow="Benchmarks"
+        title="Tracks"
+        description="Each track covers a different part of organoid electrophysiology or closed-loop behavior."
       />
       <Container>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

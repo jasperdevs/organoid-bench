@@ -19,17 +19,15 @@ export default async function OrganizationsIndex() {
       <PageHeader
         eyebrow="Labs"
         title="Contributing laboratories"
-        description="Organizations are created automatically when a source, dataset, or system is ingested. No lab is listed without at least one verified artifact."
+        description="Organizations are listed when linked to source-backed registry records."
       />
       <Container>
         {orgs.length === 0 ? (
           <EmptyState
             title="No organizations registered"
-            body="Organizations appear after the first ingested source or submission. Nothing is pre-populated."
+            body="Organizations will appear after source-backed records are curated."
             primaryHref="/submit"
-            primaryLabel="Submit an entry"
-            secondaryHref="/docs"
-            secondaryLabel="Read API docs"
+            primaryLabel="Submit"
           />
         ) : (
           <div className="rounded-[12px] border border-[color:var(--border)] overflow-hidden bg-[color:var(--surface)]">

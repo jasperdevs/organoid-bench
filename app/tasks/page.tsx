@@ -25,9 +25,9 @@ export default async function TasksIndex() {
         {tasks.length === 0 ? (
           <EmptyState
             title="No tasks defined yet"
-            body="Tasks are part of the canonical seed. If you see this, the database has not been seeded or the seed failed."
-            primaryHref="/docs"
-            primaryLabel="Read API docs"
+            body="Tasks will appear after methodology setup."
+            primaryHref="/methodology"
+            primaryLabel="Methodology"
           />
         ) : (
           <div className="rounded-[12px] border border-[color:var(--border)] overflow-hidden bg-[color:var(--surface)]">

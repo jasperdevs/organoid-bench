@@ -8,6 +8,8 @@ export function EmptyState({
   primaryLabel,
   secondaryHref,
   secondaryLabel,
+  tertiaryHref,
+  tertiaryLabel,
 }: {
   title: string;
   body: React.ReactNode;
@@ -15,6 +17,8 @@ export function EmptyState({
   primaryLabel?: string;
   secondaryHref?: string;
   secondaryLabel?: string;
+  tertiaryHref?: string;
+  tertiaryLabel?: string;
 }) {
   return (
     <div className="rounded-[12px] border border-dashed border-[color:var(--border-strong)] bg-[color:var(--surface)] p-8 text-center">
@@ -39,6 +43,14 @@ export function EmptyState({
               className="inline-flex items-center rounded-full border border-[color:var(--border-strong)] px-4 py-2 text-sm font-medium hover:bg-[color:var(--surface-alt)]"
             >
               {secondaryLabel}
+            </Link>
+          )}
+          {tertiaryHref && tertiaryLabel && (
+            <Link
+              href={tertiaryHref}
+              className="inline-flex items-center rounded-full border border-[color:var(--border-strong)] px-4 py-2 text-sm font-medium hover:bg-[color:var(--surface-alt)]"
+            >
+              {tertiaryLabel}
             </Link>
           )}
         </div>

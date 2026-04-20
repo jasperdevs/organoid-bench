@@ -1,18 +1,31 @@
-import { PrismaClient } from "@prisma/client";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { PrismaClient } from "@prisma/client/edge";
+import { PrismaD1 } from "@prisma/adapter-d1";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
-const dbUrl = process.env.DATABASE_URL ?? "file:./dev.db";
-const dbFile = dbUrl.replace(/^file:/, "");
+type EnvWithDb = { DB: D1Database };
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
-function createClient() {
-  const adapter = new PrismaBetterSqlite3({ url: `file:${dbFile}` });
-  return new PrismaClient({ adapter });
+function createClient(): PrismaClient {
+  const { env } = getCloudflareContext();
+  const d1 = (env as unknown as EnvWithDb).DB;
+  if (!d1) {
+    throw new Error("D1 binding 'DB' not found on Cloudflare env. Check wrangler.toml.");
+  }
+  return new PrismaClient({ adapter: new PrismaD1(d1) });
 }
 
-export const prisma: PrismaClient = globalForPrisma.prisma ?? createClient();
-
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
+function getClient(): PrismaClient {
+  if (!globalForPrisma.prisma) {
+    globalForPrisma.prisma = createClient();
+  }
+  return globalForPrisma.prisma;
 }
+
+export const prisma = new Proxy({} as PrismaClient, {
+  get(_target, prop: string | symbol) {
+    const client = getClient() as unknown as Record<string | symbol, unknown>;
+    const value = client[prop];
+    return typeof value === "function" ? (value as (...a: unknown[]) => unknown).bind(client) : value;
+  },
+}) as PrismaClient;

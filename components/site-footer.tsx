@@ -6,7 +6,7 @@ const columns = [
     title: "Benchmarks",
     links: [
       { href: "/leaderboards", label: "Leaderboards" },
-      { href: "/benchmarks", label: "Benchmark tracks" },
+      { href: "/benchmarks", label: "Tracks" },
       { href: "/systems", label: "Systems" },
     ],
   },
@@ -14,17 +14,18 @@ const columns = [
     title: "Data",
     links: [
       { href: "/datasets", label: "Datasets" },
-      { href: "/submit", label: "Submit an entry" },
-      { href: "/about#api", label: "API" },
+      { href: "/submit", label: "Submit" },
+      { href: "/docs", label: "Docs" },
     ],
   },
   {
     title: "About",
     links: [
       { href: "/about", label: "Overview" },
-      { href: "/about#methodology", label: "Methodology" },
-      { href: "/about#contact", label: "Contact" },
+      { href: "/methodology", label: "Methodology" },
+      { href: "/organizations", label: "Labs" },
       { href: "https://github.com/jasperdevs/organoid-bench", label: "GitHub" },
+      { href: "https://x.com/jasperdevs", label: "X: @jasperdevs" },
     ],
   },
 ];
@@ -46,9 +47,6 @@ export function SiteFooter() {
               </svg>
               <span className="text-sm font-semibold">OrganoidBench</span>
             </Link>
-            <p className="mt-4 text-sm text-[color:var(--foreground-muted)] max-w-xs">
-              Independent benchmarks for brain organoid electrophysiology and closed-loop learning.
-            </p>
           </div>
           {columns.map((col) => (
             <div key={col.title}>
@@ -70,9 +68,7 @@ export function SiteFooter() {
         </div>
 
         <div className="mt-12 pt-6 border-t border-[color:var(--border)] flex flex-wrap items-center justify-between gap-3 text-xs text-[color:var(--foreground-muted)]">
-          <div className="max-w-2xl">
-            Measures experimental system performance and adaptive neural dynamics. Does not measure consciousness, sentience, or general intelligence.
-          </div>
+          <div className="max-w-2xl">Brain organoid benchmark registry.</div>
           <div className="font-mono">v1.3.0 · © 2026</div>
         </div>
       </Container>
