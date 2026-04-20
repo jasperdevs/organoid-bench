@@ -8,12 +8,15 @@ export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const [
-    recentEntries,
+    leaderboardEntries,
     datasets,
     sources,
     tracks,
+    datasetCount,
+    sourceCount,
+    runCount,
   ] = await Promise.all([
-    getLeaderboardEntries({ limit: 6 }),
+    getLeaderboardEntries({ limit: 120 }),
     prisma.dataset.findMany({
       select: {
         id: true,
@@ -24,6 +27,7 @@ export default async function HomePage() {
         processedDataAvailable: true,
         metadataAvailable: true,
         codeAvailable: true,
+        updatedAt: true,
         files: {
           select: {
             id: true,
@@ -40,6 +44,7 @@ export default async function HomePage() {
         url: true,
         doi: true,
         repositoryType: true,
+        updatedAt: true,
         datasets: {
           select: {
             id: true,
@@ -47,7 +52,7 @@ export default async function HomePage() {
         },
       },
       orderBy: { updatedAt: "desc" },
-      take: 8,
+      take: 12,
     }),
     prisma.benchmarkTrack.findMany({
       select: {
@@ -59,16 +64,27 @@ export default async function HomePage() {
       },
       orderBy: { sortOrder: "asc" },
     }),
+    prisma.dataset.count(),
+    prisma.source.count(),
+    prisma.benchmarkRun.count(),
   ]);
 
-  const scoreRows = recentEntries.map((entry) => ({
+  const scoreRows = leaderboardEntries.map((entry) => ({
     runId: entry.runId,
     systemSlug: entry.systemSlug,
     systemName: entry.systemName,
+    organizationName: entry.organizationName,
+    trackSlug: entry.trackSlug,
     trackName: entry.trackName,
     runStatus: entry.runStatus,
     score: entry.trackScore,
     confidenceGrade: entry.confidenceGrade,
+    controlsPassed: entry.controlsPassedCount,
+    controlsTotal: entry.controlsTotalCount,
+    nOrganoids: entry.nOrganoids,
+    nSessions: entry.nSessions,
+    nLabs: entry.nLabs,
+    lastUpdated: entry.lastUpdated,
   }));
 
   const availability = [
@@ -100,13 +116,21 @@ export default async function HomePage() {
       ),
     }))
     .sort((a, b) => b.fileCount - a.fileCount)
-    .slice(0, 8);
+    .slice(0, 10);
 
   const trackRows = tracks.map((track) => ({
     slug: track.slug,
     name: track.name,
     taskCount: track.tasks.length,
     provisionalRunCount: track.runs.filter((run) => run.runStatus === "provisional").length,
+    statusCounts: {
+      published: track.runs.filter((r) => r.runStatus === "published").length,
+      provisional: track.runs.filter((r) => r.runStatus === "provisional").length,
+      scored: track.runs.filter((r) => r.runStatus === "scored").length,
+      other: track.runs.filter(
+        (r) => !["published", "provisional", "scored"].includes(r.runStatus),
+      ).length,
+    },
   }));
 
   const sourceRows = sources.map((source) => ({
@@ -116,6 +140,14 @@ export default async function HomePage() {
     doi: source.doi,
     repositoryType: source.repositoryType,
     datasetCount: source.datasets.length,
+    updatedAt: source.updatedAt.toISOString(),
+  }));
+
+  const datasetRows = datasets.slice(0, 8).map((d) => ({
+    slug: d.slug,
+    name: d.name,
+    updatedAt: d.updatedAt.toISOString(),
+    fileCount: d.files.length,
   }));
 
   return (
@@ -147,6 +179,8 @@ export default async function HomePage() {
           fileInventory={fileInventory}
           tracks={trackRows}
           sources={sourceRows}
+          datasets={datasetRows}
+          summary={{ datasetCount, sourceCount, runCount }}
         />
       </Container>
     </>
