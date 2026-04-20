@@ -1,15 +1,8 @@
+import { PrismaClient } from "@prisma/client/edge";
 import { PrismaD1 } from "@prisma/adapter-d1";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import type { PrismaClient } from "@prisma/client";
 
 type EnvWithDb = { DB: D1Database };
-
-const isWorkers =
-  typeof (globalThis as { WebSocketPair?: unknown }).WebSocketPair !== "undefined";
-
-const { PrismaClient: PrismaClientCtor } = isWorkers
-  ? ((await import("@prisma/client/edge")) as unknown as typeof import("@prisma/client"))
-  : await import("@prisma/client");
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
@@ -19,7 +12,7 @@ function createClient(): PrismaClient {
   if (!d1) {
     throw new Error("D1 binding 'DB' not found on Cloudflare env. Check wrangler.toml.");
   }
-  return new PrismaClientCtor({ adapter: new PrismaD1(d1) });
+  return new PrismaClient({ adapter: new PrismaD1(d1) });
 }
 
 function getClient(): PrismaClient {
