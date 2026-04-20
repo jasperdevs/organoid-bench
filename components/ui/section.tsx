@@ -9,7 +9,7 @@ export function Container({
   className?: string;
 }) {
   return (
-    <div className={cn("mx-auto w-full max-w-[1200px] px-4 md:px-6", className)}>
+    <div className={cn("mx-auto w-full max-w-[1280px] px-4 md:px-8", className)}>
       {children}
     </div>
   );
@@ -29,18 +29,20 @@ export function PageHeader({
   children?: React.ReactNode;
 }) {
   return (
-    <div className="border-b border-[color:var(--border)] bg-[color:var(--surface)]">
-      <Container className="py-8 md:py-10">
-        <div className="flex items-start justify-between gap-6 flex-wrap">
+    <div className="bg-[color:var(--background)]">
+      <Container className="pt-14 md:pt-20 pb-10">
+        <div className="flex items-start justify-between gap-10 flex-wrap">
           <div className="min-w-0 max-w-[720px]">
             {eyebrow && (
-              <div className="text-xs font-mono uppercase tracking-wider text-[color:var(--foreground-muted)] mb-2">
+              <div className="text-sm text-[color:var(--foreground-muted)] mb-3">
                 {eyebrow}
               </div>
             )}
-            <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">{title}</h1>
+            <h1 className="font-serif text-5xl md:text-6xl leading-[1.05] text-[color:var(--foreground)]">
+              {title}
+            </h1>
             {description && (
-              <p className="mt-3 text-base text-[color:var(--foreground-muted)]">
+              <p className="mt-5 text-base text-[color:var(--foreground-muted)] max-w-[560px]">
                 {description}
               </p>
             )}
@@ -59,21 +61,23 @@ export function Section({
   right,
   children,
   className,
+  id,
 }: {
   title?: React.ReactNode;
   description?: React.ReactNode;
   right?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
+  id?: string;
 }) {
   return (
-    <section className={cn("py-8 md:py-12", className)}>
+    <section id={id} className={cn("py-8 md:py-10", className)}>
       <Container>
         {(title || description || right) && (
-          <div className="flex items-end justify-between gap-4 mb-6 flex-wrap">
+          <div className="flex items-end justify-between gap-4 mb-5 flex-wrap border-b border-[color:var(--border)] pb-3">
             <div className="min-w-0">
               {title && (
-                <h2 className="text-xl md:text-2xl font-semibold tracking-tight">
+                <h2 className="text-base font-semibold text-[color:var(--foreground)]">
                   {title}
                 </h2>
               )}

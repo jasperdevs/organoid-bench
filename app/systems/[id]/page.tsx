@@ -1,28 +1,40 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { PageHeader, Section, Container } from "@/components/ui/section";
-import { Card, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ConfidenceBadge } from "@/components/ui/confidence-badge";
-import { DataAvailabilityBadges } from "@/components/ui/data-availability";
-import { ControlsChecklist } from "@/components/ui/controls-checklist";
-import { MetricCard, KV } from "@/components/ui/metric";
-import { MiniLearningCurve } from "@/components/ui/sparkline";
-import {
-  SYSTEMS,
-  systemById,
-  labById,
-  trackById,
-  datasetById,
-  taskById,
-  paperById,
-} from "@/lib/data";
-import { formatDate } from "@/lib/utils";
+import { Container, PageHeader } from "@/components/ui/section";
+import { LineChart } from "@/components/line-chart";
+import { SYSTEMS, systemById, trackById, datasetById } from "@/lib/data";
 
 export function generateStaticParams() {
   return SYSTEMS.map((s) => ({ id: s.id }));
 }
+
+const METRIC_LABELS: [keyof System["metrics"], string][] = [
+  ["signal", "Signal"],
+  ["response", "Response"],
+  ["plasticity", "Plasticity"],
+  ["learning", "Learning"],
+  ["retention", "Retention"],
+  ["repro", "Reproducibility"],
+];
+
+type System = NonNullable<ReturnType<typeof systemById>>;
+
+const CONTROL_LABELS: [keyof System["controls"], string][] = [
+  ["randomFeedback", "Random feedback"],
+  ["shamStim", "Sham stimulation"],
+  ["nullStim", "Null stimulation"],
+  ["frozenDecoder", "Frozen decoder"],
+  ["decoderOnly", "Decoder-only baseline"],
+  ["replication", "Independent replication"],
+];
+
+const CONTROL_COLOR: Record<string, string> = {
+  pass: "text-[color:var(--success)]",
+  partial: "text-[color:var(--warning)]",
+  missing: "text-[color:var(--foreground-muted)]",
+  fail: "text-[color:var(--destructive)]",
+  na: "text-[color:var(--foreground-muted)]",
+};
 
 export default async function SystemPage({
   params,
@@ -33,11 +45,8 @@ export default async function SystemPage({
   const s = systemById(id);
   if (!s) notFound();
 
-  const lab = labById(s.labId);
   const track = trackById(s.track);
-  const task = taskById(s.taskId);
-  const dataset = datasetById(s.datasetId);
-  const paper = paperById(s.paperId);
+  const dataset = s.datasetId ? datasetById(s.datasetId) : undefined;
 
   const rank =
     [...SYSTEMS]
@@ -45,329 +54,209 @@ export default async function SystemPage({
       .sort((a, b) => b.metrics.composite - a.metrics.composite)
       .findIndex((x) => x.id === s.id) + 1;
 
+  const curveSeries = [
+    {
+      id: "perf",
+      label: "Performance",
+      color: "#D97757",
+      points: s.learningCurve.map((p) => ({ x: p.x, y: p.y })),
+    },
+    {
+      id: "base",
+      label: "Baseline",
+      color: "#9A9A9A",
+      points: s.learningCurve.map((p) => ({ x: p.x, y: p.baseline })),
+    },
+  ];
+
   return (
     <>
       <PageHeader
-        eyebrow={`system · ${s.id}`}
+        eyebrow={`System · ${s.id}`}
         title={s.name}
-        description={
-          <span>
-            {lab?.name} · rank #{rank} in {track.name} · task{" "}
-            <span className="font-mono text-xs bg-[color:var(--surface-alt)] rounded-[8px] px-1.5 py-0.5">
-              {s.taskId}
-            </span>
-          </span>
-        }
+        description={`${s.source} · Rank #${rank} in ${track.name} · ${s.task}`}
         right={
-          <div className="flex gap-2 flex-wrap items-center">
-            <ConfidenceBadge grade={s.grade} />
-            {s.availability.peerReviewed && <Badge tone="default">peer reviewed</Badge>}
-            {s.availability.openDataset && <Badge tone="default">open dataset</Badge>}
+          <div className="flex flex-col items-end gap-2">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[color:var(--border-strong)] px-3 py-1 text-sm">
+              <span className="h-6 w-6 grid place-items-center rounded-full border border-[color:var(--border-strong)] font-mono text-xs">
+                {s.grade}
+              </span>
+              <span>Confidence</span>
+            </div>
+            <Link href="/about#confidence" className="text-sm text-[color:var(--foreground-muted)] underline underline-offset-4">
+              What do grades mean?
+            </Link>
           </div>
         }
-      >
-        <div className="mt-6">
-          <DataAvailabilityBadges avail={s.availability} />
-        </div>
-      </PageHeader>
+      />
 
-      <Section>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          <MetricCard label="signal" value={fmt(s.metrics.signal)} />
-          <MetricCard label="response" value={fmt(s.metrics.response)} />
-          <MetricCard label="plasticity" value={fmt(s.metrics.plasticity)} />
-          <MetricCard label="learning" value={fmt(s.metrics.learning)} />
-          <MetricCard label="retention" value={fmt(s.metrics.retention)} />
-          <MetricCard label="repro conf" value={fmt(s.metrics.reproducibility)} />
-        </div>
-        <div className="mt-3">
-          <MetricCard
-            label="composite (secondary)"
-            value={s.metrics.composite.toFixed(2)}
-            sub="Composite is informational only. Track-level scores are primary."
-          />
-        </div>
-      </Section>
-
-      <Section title="system overview">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <Card>
-            <CardHeader title="organoid" />
-            <KV k="type" v={s.organoidType} />
-            <KV k="species / source" v={s.species} />
-            <KV k="age" v={`${s.ageDays} days`} mono />
-            <KV k="cell composition" v={<span className="text-[color:var(--foreground-muted)]">see paper</span>} />
-            <KV k="culture" v={<span className="text-right">{s.culture}</span>} />
-          </Card>
-
-          <Card>
-            <CardHeader title="recording & stimulation" />
-            <KV k="platform" v={s.recordingPlatform} mono />
-            <KV k="stimulation" v={s.stimulation} />
-            <KV k="decoder / controller" v={s.decoder} />
-            <KV k="preprocessing" v={s.preprocessing} />
-          </Card>
-
-          <Card>
-            <CardHeader title="sample size" />
-            <KV k="organoids" v={s.nOrganoids} mono />
-            <KV k="sessions" v={s.nSessions} mono />
-            <KV k="batches" v={s.nBatches} mono />
-            <KV k="labs" v={s.nLabs} mono />
-            <KV k="last updated" v={formatDate(s.lastUpdated)} />
-          </Card>
-        </div>
-      </Section>
-
-      <Section title="benchmark results">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-4">
-          <Card>
-            <CardHeader
-              title="learning curve"
-              description="Baseline-adjusted performance across sessions."
-            />
-            <div className="text-[color:var(--foreground)]">
-              <MiniLearningCurve
-                values={s.learningCurve}
-                baseline={s.learningCurve[0]}
-                width={800}
-                height={220}
-              />
+      <Container>
+        <div className="flex flex-col gap-10">
+          <section>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-px rounded-[12px] overflow-hidden border border-[color:var(--border)] bg-[color:var(--border)]">
+              {METRIC_LABELS.map(([k, label]) => (
+                <Stat key={k} label={label} value={fmt(s.metrics[k])} />
+              ))}
+              <Stat label="Composite" value={s.metrics.composite.toFixed(2)} highlight />
             </div>
-            <div className="mt-3 flex items-center justify-between text-xs font-mono text-[color:var(--foreground-muted)]">
-              <span>dashed: pre-training baseline</span>
-              <span>{s.learningCurve.length} sessions</span>
-            </div>
-          </Card>
-          <Card>
-            <CardHeader title="comparison" />
-            <KV
-              k={`${track.name} median`}
-              v={medianFor(s.track).toFixed(2)}
-              mono
-            />
-            <KV k="this system" v={s.metrics.composite.toFixed(2)} mono />
-            <KV
-              k="Δ vs median"
-              v={(s.metrics.composite - medianFor(s.track)).toFixed(2)}
-              mono
-            />
-            <KV
-              k="decoder-only baseline"
-              v={
-                <span className="font-mono text-[color:var(--foreground-muted)]">
-                  {s.controls.decoder_only === "pass" ? "run" : "—"}
-                </span>
-              }
-            />
-            <KV
-              k="random-feedback control"
-              v={
-                <span className="font-mono text-[color:var(--foreground-muted)]">
-                  {s.controls.random_feedback === "pass"
-                    ? "run"
-                    : s.controls.random_feedback === "partial"
-                      ? "partial"
-                      : "missing"}
-                </span>
-              }
-            />
-          </Card>
-        </div>
-      </Section>
+          </section>
 
-      <Section title="controls">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
-          <ControlsChecklist controls={s.controls} />
-          <Card>
-            <CardHeader
-              title="confidence effect"
-              description="How each control affects the reproducibility confidence grade."
-            />
-            <ul className="text-sm space-y-2">
-              <li className="flex justify-between">
-                <span className="text-[color:var(--foreground-muted)]">controls passed</span>
-                <span className="font-mono">
-                  {Object.values(s.controls).filter((v) => v === "pass").length} /{" "}
-                  {Object.keys(s.controls).length}
-                </span>
-              </li>
-              <li className="flex justify-between">
-                <span className="text-[color:var(--foreground-muted)]">current grade</span>
-                <ConfidenceBadge grade={s.grade} compact />
-              </li>
-              <li className="pt-3 border-t border-[color:var(--border)] text-xs text-[color:var(--foreground-muted)]">
-                Missing or failing controls lower the reproducibility confidence
-                grade. See{" "}
-                <Link href="/methodology" className="underline underline-offset-2">
-                  methodology
+          <section className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+            <Panel title="Organoid">
+              <KV k="Type" v={s.organoidType} />
+              <KV k="Species" v={s.species} />
+              <KV k="Cell line" v={s.cellLine} />
+              <KV k="Age" v={`${s.ageDays} days`} mono />
+              <KV k="Culture" v={s.culture} />
+            </Panel>
+            <Panel title="Recording & stimulation">
+              <KV k="Platform" v={s.platform} />
+              <KV k="Stimulation" v={s.stimMethod} />
+              <KV k="Decoder" v={s.decoder ?? "—"} />
+              <KV k="Preprocessing" v={s.preprocessing} />
+            </Panel>
+            <Panel title="Sample size">
+              <KV k="Organoids" v={s.nOrganoids} mono />
+              <KV k="Sessions" v={s.nSessions} mono />
+              <KV k="Batches" v={s.nBatches} mono />
+              <KV k="Labs" v={s.nLabs} mono />
+              <KV k="Last updated" v={s.lastUpdated} mono />
+            </Panel>
+          </section>
+
+          <section>
+            <h2 className="font-serif text-2xl mb-4">Learning curve</h2>
+            <div className="rounded-[12px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4">
+              <LineChart series={curveSeries} xLabels={s.learningCurve.map((_, i) => `S${i + 1}`)} yLabel="Performance (0–1)" height={260} />
+            </div>
+          </section>
+
+          <section className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            <Panel title="Controls">
+              <ul className="flex flex-col divide-y divide-[color:var(--border)] -mt-2">
+                {CONTROL_LABELS.map(([k, label]) => {
+                  const v = s.controls[k];
+                  return (
+                    <li key={k} className="flex items-center justify-between py-2.5 text-sm">
+                      <span>{label}</span>
+                      <span className={`font-mono text-xs ${CONTROL_COLOR[v] ?? ""}`}>{v}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </Panel>
+
+            <Panel title="Data availability">
+              <ul className="flex flex-col divide-y divide-[color:var(--border)] -mt-2">
+                {[
+                  ["Raw data", s.availability.raw],
+                  ["Processed data", s.availability.processed],
+                  ["Analysis code", s.availability.code],
+                  ["Peer reviewed", s.availability.peerReviewed],
+                  ["Open dataset", s.availability.openDataset],
+                ].map(([label, avail]) => (
+                  <li key={label as string} className="flex items-center justify-between py-2.5 text-sm">
+                    <span>{label}</span>
+                    <span className={`font-mono text-xs ${avail ? "text-[color:var(--success)]" : "text-[color:var(--foreground-muted)]"}`}>
+                      {avail ? "present" : "not available"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </Panel>
+          </section>
+
+          <section>
+            <h2 className="font-serif text-2xl mb-4">Limitations</h2>
+            <div className="rounded-[12px] border border-[color:var(--border)] bg-[color:var(--surface-alt)] p-5">
+              <ul className="space-y-2 text-sm list-disc pl-5">
+                {s.limitations.map((l, i) => (
+                  <li key={i}>{l}</li>
+                ))}
+              </ul>
+              <p className="mt-4 text-xs text-[color:var(--foreground-muted)]">
+                This entry does not claim consciousness, sentience, or human-like intelligence. It claims measurable electrophysiological and adaptive behavior under the {s.task} task.
+              </p>
+            </div>
+          </section>
+
+          <section>
+            <h2 className="font-serif text-2xl mb-4">Source publication</h2>
+            <div className="rounded-[12px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5">
+              <div className="font-medium">{s.paper.title}</div>
+              <div className="text-sm text-[color:var(--foreground-muted)] mt-1">
+                {s.paper.authors.join(", ")} · {s.paper.venue} · {s.paper.year} · {s.paper.peerReviewed ? "Peer reviewed" : "Preprint"}
+              </div>
+              {s.paper.doi && (
+                <div className="text-xs font-mono text-[color:var(--foreground-muted)] mt-2">DOI: {s.paper.doi}</div>
+              )}
+              <div className="mt-4 flex gap-2 flex-wrap">
+                {dataset && (
+                  <Link
+                    href={`/datasets/${dataset.id}`}
+                    className="inline-flex items-center rounded-full border border-[color:var(--border-strong)] px-4 py-2 text-sm font-medium hover:bg-[color:var(--surface-alt)]"
+                  >
+                    View dataset
+                  </Link>
+                )}
+                <Link
+                  href={`/benchmarks/${s.track}`}
+                  className="inline-flex items-center rounded-full border border-[color:var(--border-strong)] px-4 py-2 text-sm font-medium hover:bg-[color:var(--surface-alt)]"
+                >
+                  Open {track.name} track
                 </Link>
-                .
-              </li>
-            </ul>
-          </Card>
-        </div>
-      </Section>
-
-      <Section title="data & reproducibility">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <Card>
-            <CardHeader title="artifacts" />
-            <ul className="divide-y divide-[color:var(--border)]">
-              <LinkRow label="raw data" href="#" enabled={s.availability.raw} />
-              <LinkRow
-                label="processed data"
-                href={dataset ? `/datasets/${dataset.id}` : "#"}
-                enabled={s.availability.processed}
-              />
-              <LinkRow label="analysis code" href="#" enabled={s.availability.code} />
-              <LinkRow label="protocol" href="#" enabled />
-              <LinkRow
-                label="paper"
-                href={paper ? `/papers/${paper.id}` : "#"}
-                enabled={!!paper}
-              />
-            </ul>
-          </Card>
-          <Card>
-            <CardHeader title="reproducibility detail" />
-            <KV k="organoids (N)" v={s.nOrganoids} mono />
-            <KV k="sessions (N)" v={s.nSessions} mono />
-            <KV k="batches (N)" v={s.nBatches} mono />
-            <KV k="labs (N)" v={s.nLabs} mono />
-            <KV k="license" v={dataset?.license ?? "—"} mono />
-            <KV
-              k="file formats"
-              v={<span className="font-mono text-xs">nwb · csv · parquet</span>}
-            />
-            <KV
-              k="data completeness"
-              v={
-                <span className="font-mono">
-                  {Math.round(completeness(s) * 100)}%
-                </span>
-              }
-            />
-          </Card>
-        </div>
-      </Section>
-
-      <Section title="experimental metadata">
-        <Card>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8">
-            <KV k="donor / source line" v={"H1 / H9 mixed"} />
-            <KV k="regional identity" v={s.organoidType} />
-            <KV k="age (days)" v={s.ageDays} mono />
-            <KV k="media / culture notes" v={s.culture} />
-            <KV k="electrode count" v={"26 400"} mono />
-            <KV k="sampling rate (hz)" v={"20 000"} mono />
-            <KV k="recording duration" v={"30 min / session"} />
-            <KV k="stimulation parameters" v={s.stimulation} />
-            <KV k="preprocessing" v={s.preprocessing} />
-            <KV k="spike detection" v={"threshold, 5σ"} />
-          </div>
-        </Card>
-      </Section>
-
-      <Section title="limitations">
-        <Card className="bg-[color:var(--surface-alt)] border-[color:var(--border)]">
-          <ul className="space-y-2 text-sm list-disc pl-5">
-            {s.limitations.map((l, i) => (
-              <li key={i}>{l}</li>
-            ))}
-          </ul>
-          <p className="mt-4 text-xs text-[color:var(--foreground-muted)]">
-            This entry does not claim consciousness, sentience, or human-like
-            intelligence. It claims measurable electrophysiological and adaptive
-            behavior under the {task?.name ?? s.taskId} task.
-          </p>
-        </Card>
-      </Section>
-
-      <Section title="citation">
-        <Card>
-          <div className="text-xs font-mono uppercase tracking-wider text-[color:var(--foreground-muted)] mb-2">
-            recommended citation
-          </div>
-          <pre className="font-mono text-xs whitespace-pre-wrap bg-[color:var(--surface-alt)] rounded-[12px] p-4 border border-[color:var(--border)]">
-{`OrganoidBench entry ${s.id} (${formatDate(s.lastUpdated)}).
-"${s.name}". ${lab?.name}. Track: ${track.name}. Task: ${s.taskId}.
-Grade: ${s.grade}. https://organoidbench.org/systems/${s.id}`}
-          </pre>
-          {paper && (
-            <div className="mt-3 text-sm text-[color:var(--foreground-muted)]">
-              Source publication:{" "}
-              <Link
-                href={`/papers/${paper.id}`}
-                className="text-[color:var(--foreground)] underline underline-offset-2"
-              >
-                {paper.title}
-              </Link>
-              {" · "}
-              <span className="font-mono text-xs">{paper.authors[0]} · {paper.year} · {paper.venue}</span>
+                <Link
+                  href="/submit"
+                  className="inline-flex items-center rounded-full border border-[color:var(--border-strong)] px-4 py-2 text-sm font-medium hover:bg-[color:var(--surface-alt)]"
+                >
+                  Submit correction
+                </Link>
+              </div>
             </div>
-          )}
-          <div className="mt-4 flex gap-2">
-            <Button href={`/datasets/${s.datasetId}`} size="sm" variant="outline">
-              view dataset
-            </Button>
-            <Button href={`/labs/${s.labId}`} size="sm" variant="ghost">
-              lab page
-            </Button>
-            <Button href="/submit#correction" size="sm" variant="ghost">
-              submit correction
-            </Button>
-          </div>
-        </Card>
-      </Section>
+          </section>
+
+          <section>
+            <h2 className="font-serif text-2xl mb-4">Citation</h2>
+            <pre className="font-mono text-xs whitespace-pre bg-[color:var(--surface-alt)] rounded-[12px] p-4 border border-[color:var(--border)] overflow-x-auto">
+{`OrganoidBench entry ${s.id} (${s.lastUpdated}).
+"${s.name}". ${s.source}. Track: ${track.name}. Task: ${s.task}.
+Grade: ${s.grade}. https://organoidbench.org/systems/${s.id}`}
+            </pre>
+          </section>
+        </div>
+      </Container>
+      <div className="h-16" />
     </>
   );
 }
 
-function LinkRow({
-  label,
-  href,
-  enabled,
-}: {
-  label: string;
-  href: string;
-  enabled: boolean;
-}) {
+function Stat({ label, value, highlight = false }: { label: string; value: string; highlight?: boolean }) {
   return (
-    <li className="flex items-center justify-between py-3">
-      <span className="text-sm">{label}</span>
-      {enabled ? (
-        <Link
-          href={href}
-          className="text-sm font-mono underline underline-offset-2"
-        >
-          open →
-        </Link>
-      ) : (
-        <span className="text-sm font-mono text-[color:var(--foreground-muted)]">
-          not available
-        </span>
-      )}
-    </li>
+    <div className={`p-4 ${highlight ? "bg-[color:var(--foreground)] text-[color:var(--background)]" : "bg-[color:var(--surface)]"}`}>
+      <div className={`text-xs ${highlight ? "opacity-75" : "text-[color:var(--foreground-muted)]"}`}>{label}</div>
+      <div className="mt-1 text-lg font-mono font-semibold">{value}</div>
+    </div>
+  );
+}
+
+function Panel({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-[12px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5">
+      <div className="text-sm font-semibold mb-3">{title}</div>
+      {children}
+    </div>
+  );
+}
+
+function KV({ k, v, mono }: { k: string; v: React.ReactNode; mono?: boolean }) {
+  return (
+    <div className="flex items-start justify-between gap-4 py-2 border-b border-[color:var(--border)] last:border-0">
+      <div className="text-sm text-[color:var(--foreground-muted)]">{k}</div>
+      <div className={`text-sm text-right ${mono ? "font-mono text-xs" : ""}`}>{v}</div>
+    </div>
   );
 }
 
 function fmt(v: number) {
   return v === 0 ? "—" : v.toFixed(2);
-}
-
-function medianFor(track: string) {
-  const vals = SYSTEMS.filter((s) => s.track === track).map((s) => s.metrics.composite).sort();
-  return vals.length ? vals[Math.floor(vals.length / 2)] : 0;
-}
-
-function completeness(s: (typeof SYSTEMS)[number]) {
-  const a = [
-    s.availability.raw,
-    s.availability.processed,
-    s.availability.code,
-    s.availability.peerReviewed,
-    s.availability.openDataset,
-  ];
-  return a.filter(Boolean).length / a.length;
 }

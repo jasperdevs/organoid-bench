@@ -1,23 +1,27 @@
-import { PageHeader, Section } from "@/components/ui/section";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { Container, PageHeader } from "@/components/ui/section";
 import { SystemsBrowser } from "@/components/systems-browser";
 
 export default function SystemsIndex() {
   return (
     <>
       <PageHeader
-        eyebrow="systems"
-        title="all benchmarked systems"
-        description="A system is the full experimental setup: organoid + culture protocol + recording hardware + stimulation method + decoder/controller + task + controls + dataset + lab."
+        eyebrow="Systems"
+        title="All benchmarked systems"
+        description="A system is the full experimental setup: organoid, culture protocol, recording hardware, stimulation method, decoder, task, controls, dataset, and source."
         right={
-          <Button href="/submit" size="sm" variant="primary">
-            submit a system
-          </Button>
+          <Link
+            href="/submit"
+            className="inline-flex items-center rounded-full bg-[color:var(--foreground)] text-[color:var(--background)] px-4 py-2 text-sm font-medium hover:opacity-90"
+          >
+            Submit a system
+          </Link>
         }
       />
-      <Section>
+      <Container>
         <SystemsBrowser />
-      </Section>
+      </Container>
+      <div className="h-16" />
     </>
   );
 }

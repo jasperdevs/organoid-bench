@@ -1,16 +1,28 @@
 @import "tailwindcss";
 
 :root {
-  --background: #F6F6F6;
+  --background: #FFFFFF;
   --surface: #FFFFFF;
-  --surface-alt: #F0F0F0;
-  --foreground: #0F0F0F;
+  --surface-alt: #F5F5F5;
+  --surface-soft: #FAFAFA;
+  --foreground: #0A0A0A;
   --foreground-muted: #6B6B6B;
-  --accent: #262626;
-  --border: #E5E5E5;
-  --ring: #0F0F0F;
+  --foreground-subtle: #9A9A9A;
+  --accent: #0A0A0A;
+  --border: #E8E8E8;
+  --border-strong: #D0D0D0;
+  --ring: #0A0A0A;
 
-  --success: #1F7A3A;
+  --chart-1: #D97757;
+  --chart-2: #6FAE6F;
+  --chart-3: #1A1A1A;
+  --chart-4: #5B9BD5;
+  --chart-5: #B583D0;
+  --chart-6: #E5A84B;
+  --chart-7: #E06A6A;
+  --chart-8: #4E9AE0;
+
+  --success: #2F7A3A;
   --warning: #8A5A00;
   --destructive: #A52A2A;
   --info: #1F4B7A;
@@ -23,33 +35,19 @@
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
-}
-
-.dark {
-  --background: #0A0A0A;
-  --surface: #0F0F0F;
-  --surface-alt: #181818;
-  --foreground: #F6F6F6;
-  --foreground-muted: #A1A1A1;
-  --accent: #262626;
-  --border: #222222;
-  --ring: #F6F6F6;
-
-  --success: #4FBE75;
-  --warning: #D9A246;
-  --destructive: #E06868;
-  --info: #6AA3E0;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-surface: var(--surface);
   --color-surface-alt: var(--surface-alt);
+  --color-surface-soft: var(--surface-soft);
   --color-foreground: var(--foreground);
   --color-foreground-muted: var(--foreground-muted);
+  --color-foreground-subtle: var(--foreground-subtle);
   --color-accent: var(--accent);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-ring: var(--ring);
 
   --color-success: var(--success);
@@ -59,7 +57,7 @@
 
   --font-sans: var(--font-inter);
   --font-mono: var(--font-jetbrains);
-  --font-logo: var(--font-bytesized);
+  --font-serif: var(--font-serif);
 
   --radius: var(--radius-lg);
 }
@@ -80,18 +78,18 @@ body {
 
 ::selection {
   background: var(--accent);
-  color: #F6F6F6;
+  color: #FFFFFF;
 }
 
 .font-mono {
   font-family: var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-.font-logo {
-  font-family: var(--font-bytesized), var(--font-inter), system-ui, sans-serif;
+.font-serif {
+  font-family: var(--font-serif), Georgia, "Times New Roman", serif;
+  letter-spacing: -0.01em;
 }
 
-/* Subtle scrollbar */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -104,16 +102,14 @@ body {
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--foreground-muted);
+  background: var(--foreground-subtle);
 }
 
-/* focus ring */
 :focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
 
-/* smooth transitions on interactive elements */
 a, button, [role="button"], input, select, textarea {
   transition: color 120ms cubic-bezier(0.4, 0, 0.2, 1),
               background-color 120ms cubic-bezier(0.4, 0, 0.2, 1),

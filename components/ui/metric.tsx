@@ -21,7 +21,7 @@ export function MetricCard({
         className,
       )}
     >
-      <div className="text-xs font-mono uppercase tracking-wider text-[color:var(--foreground-muted)]">
+      <div className="text-xs text-[color:var(--foreground-muted)]">
         {label}
       </div>
       <div className={cn("mt-2 text-2xl font-semibold tracking-tight", mono && "font-mono")}>
@@ -50,7 +50,7 @@ export function StatRow({
     >
       {items.map((i, idx) => (
         <div key={idx} className="bg-[color:var(--surface)] p-4">
-          <div className="text-xs font-mono uppercase tracking-wider text-[color:var(--foreground-muted)]">
+          <div className="text-xs text-[color:var(--foreground-muted)]">
             {i.label}
           </div>
           <div className="mt-1 text-lg font-mono font-semibold tracking-tight">

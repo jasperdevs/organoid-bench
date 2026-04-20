@@ -1,37 +1,35 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/section";
-import { GlobalSearch } from "@/components/global-search";
 
 const nav = [
-  { href: "/leaderboard", label: "leaderboard" },
-  { href: "/benchmarks", label: "benchmarks" },
-  { href: "/systems", label: "systems" },
-  { href: "/datasets", label: "datasets" },
-  { href: "/labs", label: "labs" },
-  { href: "/methodology", label: "methodology" },
-  { href: "/submit", label: "submit" },
-  { href: "/docs", label: "docs" },
+  { href: "/leaderboards", label: "Leaderboards" },
+  { href: "/systems", label: "Systems" },
+  { href: "/datasets", label: "Datasets" },
+  { href: "/benchmarks", label: "Benchmarks" },
+  { href: "/about", label: "About" },
 ];
 
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-40 border-b border-[color:var(--border)] bg-[color:var(--surface)]/90 backdrop-blur supports-[backdrop-filter]:bg-[color:var(--surface)]/80">
+    <header className="sticky top-0 z-40 bg-[color:var(--background)] border-b border-[color:var(--border)]">
       <Container>
-        <div className="h-14 flex items-center gap-6">
-          <Link href="/" className="flex items-center gap-2 shrink-0">
-            <span className="h-6 w-6 rounded-[8px] bg-[color:var(--foreground)] text-[color:var(--background)] grid place-items-center text-[10px] font-semibold">
-              OB
+        <div className="h-16 flex items-center gap-4">
+          <Link
+            href="/"
+            className="shrink-0 inline-flex items-center gap-2 bg-[color:var(--foreground)] text-[color:var(--background)] rounded-full pl-3 pr-4 py-1.5"
+          >
+            <LogoMark />
+            <span className="text-sm font-semibold tracking-tight">
+              OrganoidBench
             </span>
-            <span className="font-logo text-xl leading-none">organoidbench</span>
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-1 text-sm">
+          <nav className="hidden lg:flex items-center bg-[color:var(--surface-alt)] rounded-full p-1 gap-0.5">
             {nav.map((n) => (
               <Link
                 key={n.href}
                 href={n.href}
-                className="px-3 py-1.5 rounded-[12px] text-[color:var(--foreground-muted)] hover:text-[color:var(--foreground)] hover:bg-[color:var(--surface-alt)]"
+                className="px-3.5 py-1.5 rounded-full text-sm text-[color:var(--foreground)] hover:bg-[color:var(--surface)] font-medium"
               >
                 {n.label}
               </Link>
@@ -39,22 +37,22 @@ export function SiteHeader() {
           </nav>
 
           <div className="ml-auto flex items-center gap-2">
-            <div className="hidden md:block w-56">
-              <GlobalSearch />
-            </div>
-            <Button href="/submit" size="sm" variant="primary">
-              submit result
-            </Button>
+            <Link
+              href="/submit"
+              className="hidden sm:inline-flex items-center rounded-full bg-[color:var(--foreground)] text-[color:var(--background)] px-4 py-2 text-sm font-medium hover:opacity-90"
+            >
+              Submit entry
+            </Link>
           </div>
         </div>
 
-        <div className="lg:hidden pb-2 overflow-x-auto">
-          <nav className="flex items-center gap-1 text-sm">
+        <div className="lg:hidden pb-3 -mt-1 overflow-x-auto">
+          <nav className="inline-flex items-center bg-[color:var(--surface-alt)] rounded-full p-1 gap-0.5">
             {nav.map((n) => (
               <Link
                 key={n.href}
                 href={n.href}
-                className="px-3 py-1.5 rounded-[12px] text-[color:var(--foreground-muted)] hover:text-[color:var(--foreground)] hover:bg-[color:var(--surface-alt)] whitespace-nowrap"
+                className="px-3.5 py-1.5 rounded-full text-sm text-[color:var(--foreground)] hover:bg-[color:var(--surface)] font-medium whitespace-nowrap"
               >
                 {n.label}
               </Link>
@@ -63,5 +61,27 @@ export function SiteHeader() {
         </div>
       </Container>
     </header>
+  );
+}
+
+function LogoMark() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      aria-hidden="true"
+      className="shrink-0"
+    >
+      <circle cx="5" cy="8" r="2.5" fill="currentColor" />
+      <circle cx="11" cy="5" r="1.5" fill="currentColor" />
+      <circle cx="11" cy="11" r="1.5" fill="currentColor" />
+      <path
+        d="M7 8h2.5M9.5 6.5l1.5-1M9.5 9.5l1.5 1"
+        stroke="currentColor"
+        strokeWidth="1"
+      />
+    </svg>
   );
 }

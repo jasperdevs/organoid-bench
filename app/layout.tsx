@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono, Bytesized } from "next/font/google";
+import { Inter, JetBrains_Mono, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
@@ -16,17 +16,17 @@ const jetbrains = JetBrains_Mono({
   display: "swap",
 });
 
-const bytesized = Bytesized({
-  variable: "--font-bytesized",
+const serif = Instrument_Serif({
+  variable: "--font-serif",
   subsets: ["latin"],
   weight: "400",
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "OrganoidBench — standardized evaluation for brain organoid systems",
+  title: "OrganoidBench — independent analysis of brain organoid systems",
   description:
-    "The central public benchmark for brain organoid electrophysiology, plasticity, and closed-loop learning systems.",
+    "Benchmarks for brain organoid electrophysiology, plasticity, and closed-loop learning systems.",
 };
 
 export default function RootLayout({
@@ -37,7 +37,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${jetbrains.variable} ${bytesized.variable} h-full`}
+      className={`${inter.variable} ${jetbrains.variable} ${serif.variable} h-full`}
     >
       <body className="min-h-full flex flex-col antialiased">
         <SiteHeader />

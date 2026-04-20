@@ -3,39 +3,28 @@ import { Container } from "@/components/ui/section";
 
 const columns = [
   {
-    title: "benchmark",
+    title: "Benchmarks",
     links: [
-      { href: "/leaderboard", label: "leaderboard" },
-      { href: "/benchmarks", label: "benchmark tracks" },
-      { href: "/systems", label: "systems" },
-      { href: "/tasks", label: "tasks" },
+      { href: "/leaderboards", label: "Leaderboards" },
+      { href: "/benchmarks", label: "Benchmark tracks" },
+      { href: "/systems", label: "Systems" },
     ],
   },
   {
-    title: "data",
+    title: "Data",
     links: [
-      { href: "/datasets", label: "datasets" },
-      { href: "/labs", label: "labs & sources" },
-      { href: "/papers", label: "papers" },
-      { href: "/docs", label: "api & docs" },
+      { href: "/datasets", label: "Datasets" },
+      { href: "/submit", label: "Submit an entry" },
+      { href: "/about#api", label: "API" },
     ],
   },
   {
-    title: "standards",
+    title: "About",
     links: [
-      { href: "/methodology", label: "methodology" },
-      { href: "/governance", label: "governance & review" },
-      { href: "/submit", label: "submit a result" },
-      { href: "/about", label: "about" },
-    ],
-  },
-  {
-    title: "external",
-    links: [
-      { href: "https://github.com/organoidbench", label: "github" },
-      { href: "/about#contact", label: "contact" },
-      { href: "/about#citation", label: "citation" },
-      { href: "/methodology#ethics", label: "ethics note" },
+      { href: "/about", label: "Overview" },
+      { href: "/about#methodology", label: "Methodology" },
+      { href: "/about#contact", label: "Contact" },
+      { href: "https://github.com/jasperdevs/organoid-bench", label: "GitHub" },
     ],
   },
 ];
@@ -43,31 +32,33 @@ const columns = [
 export function SiteFooter() {
   return (
     <footer className="border-t border-[color:var(--border)] bg-[color:var(--surface)] mt-auto">
-      <Container className="py-10">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
+      <Container className="py-12">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           <div className="col-span-2 md:col-span-1">
-            <Link href="/" className="flex items-center gap-2">
-              <span className="h-6 w-6 rounded-[8px] bg-[color:var(--foreground)] text-[color:var(--background)] grid place-items-center text-[10px] font-semibold">
-                OB
-              </span>
-              <span className="font-logo text-xl leading-none">organoidbench</span>
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 bg-[color:var(--foreground)] text-[color:var(--background)] rounded-full pl-3 pr-4 py-1.5"
+            >
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <circle cx="5" cy="8" r="2.5" fill="currentColor" />
+                <circle cx="11" cy="5" r="1.5" fill="currentColor" />
+                <circle cx="11" cy="11" r="1.5" fill="currentColor" />
+              </svg>
+              <span className="text-sm font-semibold">OrganoidBench</span>
             </Link>
-            <p className="mt-3 text-sm text-[color:var(--foreground-muted)] max-w-sm">
-              standardized evaluation for brain organoid electrophysiology,
-              plasticity, and closed-loop learning.
+            <p className="mt-4 text-sm text-[color:var(--foreground-muted)] max-w-xs">
+              Independent benchmarks for brain organoid electrophysiology and closed-loop learning.
             </p>
           </div>
           {columns.map((col) => (
             <div key={col.title}>
-              <div className="text-xs font-mono uppercase tracking-wider text-[color:var(--foreground-muted)] mb-3">
-                {col.title}
-              </div>
+              <div className="text-sm font-semibold mb-3">{col.title}</div>
               <ul className="space-y-2 text-sm">
                 {col.links.map((l) => (
                   <li key={l.href}>
                     <Link
                       href={l.href}
-                      className="text-[color:var(--foreground)] hover:text-[color:var(--foreground-muted)]"
+                      className="text-[color:var(--foreground-muted)] hover:text-[color:var(--foreground)]"
                     >
                       {l.label}
                     </Link>
@@ -78,13 +69,11 @@ export function SiteFooter() {
           ))}
         </div>
 
-        <div className="mt-10 pt-6 border-t border-[color:var(--border)] flex flex-wrap items-center justify-between gap-3 text-xs text-[color:var(--foreground-muted)]">
-          <div>
-            OrganoidBench measures experimental system performance and adaptive
-            neural dynamics. It does not measure consciousness, sentience, or
-            human-like intelligence.
+        <div className="mt-12 pt-6 border-t border-[color:var(--border)] flex flex-wrap items-center justify-between gap-3 text-xs text-[color:var(--foreground-muted)]">
+          <div className="max-w-2xl">
+            Measures experimental system performance and adaptive neural dynamics. Does not measure consciousness, sentience, or general intelligence.
           </div>
-          <div className="font-mono">methodology v1.3.0 · © 2026</div>
+          <div className="font-mono">v1.3.0 · © 2026</div>
         </div>
       </Container>
     </footer>

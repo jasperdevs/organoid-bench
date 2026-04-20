@@ -1,25 +1,23 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { PageHeader, Section } from "@/components/ui/section";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { BenchmarkChart } from "@/components/benchmark-chart";
-import { Leaderboard } from "@/components/leaderboard";
-import {
-  TRACKS,
-  SYSTEMS,
-  DATASETS,
-  trackById,
-  datasetById,
-  labById,
-  type Track,
-} from "@/lib/data";
-import { formatDate } from "@/lib/utils";
+import { Container, PageHeader } from "@/components/ui/section";
+import { BarChart } from "@/components/bar-chart";
+import { TRACKS, SYSTEMS } from "@/lib/data";
 
 export function generateStaticParams() {
   return TRACKS.map((t) => ({ track: t.id }));
 }
+
+const METRIC_BY_TRACK: Record<string, keyof (typeof SYSTEMS)[number]["metrics"]> = {
+  "signal-quality": "signal",
+  "responsiveness": "response",
+  "plasticity": "plasticity",
+  "closed-loop-learning": "learning",
+  "retention": "retention",
+  "reproducibility": "repro",
+};
+
+const CHART_PALETTE = ["#D97757", "#6FAE6F", "#1A1A1A", "#5B9BD5", "#B583D0", "#E5A84B", "#E06A6A", "#4E9AE0"];
 
 export default async function TrackPage({
   params,
@@ -30,254 +28,181 @@ export default async function TrackPage({
   const track = TRACKS.find((t) => t.id === id);
   if (!track) notFound();
 
+  const metricKey = METRIC_BY_TRACK[track.id];
   const systemsInTrack = SYSTEMS.filter((s) => s.track === track.id);
-  const top = [...systemsInTrack].sort(
-    (a, b) => b.metrics.composite - a.metrics.composite,
-  )[0];
+  const ranked = [...systemsInTrack].sort((a, b) => b.metrics[metricKey] - a.metrics[metricKey]);
+  const top = ranked[0];
   const lastUpdated = systemsInTrack
-    .map((s) => new Date(s.lastUpdated).getTime())
+    .map((s) => s.lastUpdated)
     .sort()
     .at(-1);
 
-  const isClosedLoop = track.id === "closed-loop-learning";
+  const chartData = ranked.slice(0, 12).map((s, i) => ({
+    label: s.name.length > 24 ? s.name.slice(0, 22) + "…" : s.name,
+    value: s.metrics[metricKey],
+    color: CHART_PALETTE[i % CHART_PALETTE.length],
+  }));
 
   return (
     <>
       <PageHeader
-        eyebrow="benchmark track"
+        eyebrow="Benchmark track"
         title={track.name}
         description={track.description}
         right={
           <div className="flex gap-2">
-            <Button href="/submit" size="sm" variant="primary">
-              submit result
-            </Button>
-            <Button href="/methodology" size="sm" variant="outline">
-              methodology
-            </Button>
+            <Link
+              href="/submit"
+              className="inline-flex items-center rounded-full bg-[color:var(--foreground)] text-[color:var(--background)] px-4 py-2 text-sm font-medium hover:opacity-90"
+            >
+              Submit result
+            </Link>
+            <Link
+              href="/about#methodology"
+              className="inline-flex items-center rounded-full border border-[color:var(--border-strong)] px-4 py-2 text-sm font-medium hover:bg-[color:var(--surface-alt)]"
+            >
+              Methodology
+            </Link>
           </div>
         }
-      >
-        <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-px rounded-[16px] overflow-hidden border border-[color:var(--border)] bg-[color:var(--border)]">
-          <Stat label="systems evaluated" value={systemsInTrack.length} />
-          <Stat
-            label="top system"
-            value={top ? top.name.slice(0, 22) : "—"}
-            mono={false}
-          />
-          <Stat
-            label="top composite"
-            value={top ? top.metrics.composite.toFixed(2) : "—"}
-          />
-          <Stat
-            label="last updated"
-            value={lastUpdated ? formatDate(new Date(lastUpdated).toISOString()) : "—"}
-            mono={false}
-          />
-        </div>
-      </PageHeader>
+      />
 
-      <Section title="track leaderboard">
-        <Leaderboard initialTrack={track.id} compact showAdvancedFilters={false} />
-      </Section>
-
-      <Section title="track-specific chart">
-        <BenchmarkChart
-          systems={systemsInTrack}
-          defaultX="learning"
-          defaultY="reproducibility"
-          trackFilter={track.id}
-        />
-      </Section>
-
-      <Section>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <Card className="p-6">
-            <div className="text-xs font-mono uppercase tracking-wider text-[color:var(--foreground-muted)] mb-2">
-              metric definitions
+      <Container>
+        <div className="flex flex-col gap-10">
+          <section>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-px rounded-[12px] overflow-hidden border border-[color:var(--border)] bg-[color:var(--border)]">
+              <Stat label="Systems evaluated" value={String(systemsInTrack.length)} />
+              <Stat label="Top system" value={top ? top.name.slice(0, 22) : "—"} mono={false} />
+              <Stat label="Top score" value={top ? top.metrics[metricKey].toFixed(2) : "—"} />
+              <Stat label="Last updated" value={lastUpdated ?? "—"} mono />
             </div>
-            <ul className="divide-y divide-[color:var(--border)]">
-              {track.metrics.map((m) => (
-                <li key={m.name} className="py-3">
-                  <div className="flex items-center justify-between">
-                    <div className="font-medium text-sm">{m.name}</div>
-                    {m.unit && (
-                      <span className="font-mono text-[11px] text-[color:var(--foreground-muted)]">
-                        {m.unit}
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-sm text-[color:var(--foreground-muted)] mt-0.5">
-                    {m.description}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </Card>
+          </section>
 
-          <div className="grid grid-cols-1 gap-4">
-            <Card>
-              <div className="text-xs font-mono uppercase tracking-wider text-[color:var(--foreground-muted)] mb-2">
-                required inputs
-              </div>
+          <section>
+            <h2 className="font-serif text-2xl mb-4">Leaderboard</h2>
+            <div className="rounded-[12px] border border-[color:var(--border)] bg-[color:var(--surface)] p-4">
+              <BarChart bars={chartData} maxOverride={1} height={360} unit="0–1" />
+            </div>
+          </section>
+
+          <section className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            <Panel title="What this track measures">
               <ul className="text-sm space-y-1.5 list-disc pl-5">
-                {track.requiredInputs.map((i) => (
-                  <li key={i}>{i}</li>
-                ))}
+                {track.measures.map((m) => <li key={m}>{m}</li>)}
               </ul>
-            </Card>
-            <Card>
-              <div className="text-xs font-mono uppercase tracking-wider text-[color:var(--foreground-muted)] mb-2">
-                required controls
-              </div>
+            </Panel>
+            <Panel title="Does not measure">
+              <ul className="text-sm space-y-1.5 list-disc pl-5 text-[color:var(--foreground-muted)]">
+                {track.excludes.map((m) => <li key={m}>{m}</li>)}
+              </ul>
+            </Panel>
+          </section>
+
+          <section>
+            <h2 className="font-serif text-2xl mb-4">Metric definitions</h2>
+            <div className="rounded-[12px] border border-[color:var(--border)] overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-[color:var(--surface-alt)] text-left">
+                  <tr>
+                    <th className="px-4 py-3 font-medium">Metric</th>
+                    <th className="px-4 py-3 font-medium">Description</th>
+                    <th className="px-4 py-3 font-medium text-right">Unit</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {track.metrics.map((m) => (
+                    <tr key={m.name} className="border-t border-[color:var(--border)]">
+                      <td className="px-4 py-3 font-medium">{m.name}</td>
+                      <td className="px-4 py-3 text-[color:var(--foreground-muted)]">{m.description}</td>
+                      <td className="px-4 py-3 font-mono text-xs text-right">{m.unit ?? "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+            <Panel title="Required inputs">
               <ul className="text-sm space-y-1.5 list-disc pl-5">
-                {track.requiredControls.map((i) => (
-                  <li key={i}>{i}</li>
-                ))}
+                {track.requiredInputs.map((i) => <li key={i}>{i}</li>)}
               </ul>
-            </Card>
-            <Card>
-              <div className="text-xs font-mono uppercase tracking-wider text-[color:var(--foreground-muted)] mb-2">
-                scoring formula
-              </div>
-              <p className="text-sm text-[color:var(--foreground-muted)]">
-                {track.scoringFormula}
-              </p>
-            </Card>
-          </div>
+            </Panel>
+            <Panel title="Required controls">
+              <ul className="text-sm space-y-1.5 list-disc pl-5">
+                {track.requiredControls.map((i) => <li key={i}>{i}</li>)}
+              </ul>
+            </Panel>
+            <Panel title="Common failure modes">
+              <ul className="text-sm space-y-1.5 list-disc pl-5 text-[color:var(--foreground-muted)]">
+                {track.failureModes.map((f) => <li key={f}>{f}</li>)}
+              </ul>
+            </Panel>
+          </section>
+
+          <section>
+            <h2 className="font-serif text-2xl mb-4">Scoring formula</h2>
+            <div className="rounded-[12px] border border-[color:var(--border)] bg-[color:var(--surface-alt)] p-5 text-sm">
+              {track.scoringFormula}
+            </div>
+          </section>
+
+          <section>
+            <h2 className="font-serif text-2xl mb-4">All systems on this track</h2>
+            <div className="w-full overflow-x-auto rounded-[12px] border border-[color:var(--border)] bg-[color:var(--surface)]">
+              <table className="w-full text-sm">
+                <thead className="text-left bg-[color:var(--surface-alt)]">
+                  <tr>
+                    <th className="px-4 py-3 font-medium w-10">#</th>
+                    <th className="px-4 py-3 font-medium">System</th>
+                    <th className="px-4 py-3 font-medium">Source</th>
+                    <th className="px-4 py-3 font-medium text-right">{track.name} score</th>
+                    <th className="px-4 py-3 font-medium text-right">Composite</th>
+                    <th className="px-4 py-3 font-medium">Grade</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ranked.map((s, i) => (
+                    <tr key={s.id} className="border-t border-[color:var(--border)] hover:bg-[color:var(--surface-alt)]">
+                      <td className="px-4 py-3 font-mono text-xs">{i + 1}</td>
+                      <td className="px-4 py-3">
+                        <Link href={`/systems/${s.id}`} className="font-medium hover:underline">{s.name}</Link>
+                      </td>
+                      <td className="px-4 py-3 text-[color:var(--foreground-muted)]">{s.source}</td>
+                      <td className="px-4 py-3 font-mono text-xs text-right">{s.metrics[metricKey].toFixed(2)}</td>
+                      <td className="px-4 py-3 font-mono text-xs text-right">{s.metrics.composite.toFixed(2)}</td>
+                      <td className="px-4 py-3">
+                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-[color:var(--border-strong)] font-mono text-xs">
+                          {s.grade}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
         </div>
-      </Section>
-
-      {isClosedLoop && <ClosedLoopControls track={track} />}
-
-      <Section>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <Card>
-            <div className="text-xs font-mono uppercase tracking-wider text-[color:var(--foreground-muted)] mb-2">
-              example datasets
-            </div>
-            <ul className="divide-y divide-[color:var(--border)]">
-              {track.exampleDatasets.map((d) => {
-                const ds = datasetById(d);
-                if (!ds) return null;
-                return (
-                  <li key={d} className="py-3 first:pt-0 last:pb-0">
-                    <Link href={`/datasets/${d}`} className="font-medium hover:underline">
-                      {ds.name}
-                    </Link>
-                    <div className="text-xs text-[color:var(--foreground-muted)]">
-                      {ds.modality} · {ds.nOrganoids} organoids · {ds.license} ·{" "}
-                      {labById(ds.labId)?.name}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          </Card>
-          <Card>
-            <div className="text-xs font-mono uppercase tracking-wider text-[color:var(--foreground-muted)] mb-2">
-              common failure modes
-            </div>
-            <ul className="text-sm space-y-1.5 list-disc pl-5 text-[color:var(--foreground-muted)]">
-              {track.failureModes.map((f) => (
-                <li key={f}>{f}</li>
-              ))}
-            </ul>
-          </Card>
-        </div>
-      </Section>
-
-      <Section>
-        <Card className="bg-[color:var(--surface-alt)]">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <div className="text-xs font-mono uppercase tracking-wider text-[color:var(--foreground-muted)]">
-                submission requirements
-              </div>
-              <p className="text-sm mt-1 max-w-[540px] text-[color:var(--foreground)]">
-                Results on the {track.name} track must include all required
-                inputs, pass minimum control conditions, and declare limitations
-                explicitly.
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <Button href="/submit" variant="primary" size="sm">
-                submit result
-              </Button>
-              <Button href="/methodology" variant="outline" size="sm">
-                methodology
-              </Button>
-            </div>
-          </div>
-        </Card>
-      </Section>
+      </Container>
+      <div className="h-16" />
     </>
   );
 }
 
-function Stat({
-  label,
-  value,
-  mono = true,
-}: {
-  label: string;
-  value: React.ReactNode;
-  mono?: boolean;
-}) {
+function Stat({ label, value, mono = true }: { label: string; value: string; mono?: boolean }) {
   return (
     <div className="bg-[color:var(--surface)] p-4">
-      <div className="text-xs font-mono uppercase tracking-wider text-[color:var(--foreground-muted)]">
-        {label}
-      </div>
-      <div className={mono ? "mt-1 text-lg font-mono" : "mt-1 text-lg font-medium truncate"}>
-        {value}
-      </div>
+      <div className="text-xs text-[color:var(--foreground-muted)]">{label}</div>
+      <div className={`mt-1 text-lg font-semibold ${mono ? "font-mono" : "truncate"}`}>{value}</div>
     </div>
   );
 }
 
-function ClosedLoopControls({ track }: { track: (typeof TRACKS)[number] }) {
-  const items = [
-    {
-      label: "random feedback",
-      detail: "replace real feedback with trial-shuffled feedback; task improvement must exceed this baseline.",
-    },
-    {
-      label: "sham feedback",
-      detail: "identical-shape stimulation carrying no task signal; effect size must exceed sham.",
-    },
-    {
-      label: "frozen decoder",
-      detail: "decoder weights fixed during evaluation; improvement cannot come from decoder adaptation.",
-    },
-    {
-      label: "decoder-only baseline",
-      detail: "run decoder + controller on surrogate input; measures task-solvability without organoid.",
-    },
-    {
-      label: "null stimulation",
-      detail: "omit stimulation while logging controller output.",
-    },
-    {
-      label: "retention",
-      detail: "post-rest performance required when retention claims are made.",
-    },
-  ];
+function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <Section
-      title="closed-loop specific controls"
-      description="Additional control conditions required for closed-loop learning entries."
-    >
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {items.map((i) => (
-          <Card key={i.label}>
-            <div className="text-sm font-medium">{i.label}</div>
-            <p className="mt-1 text-sm text-[color:var(--foreground-muted)]">
-              {i.detail}
-            </p>
-          </Card>
-        ))}
-      </div>
-    </Section>
+    <div className="rounded-[12px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5">
+      <div className="text-sm font-semibold mb-3">{title}</div>
+      {children}
+    </div>
   );
 }
